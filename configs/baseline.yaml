@@ -1,0 +1,12 @@
+# Placeholder baseline experiment settings.
+# Dataset paths are not defined here; configure them locally when implementing training.
+
+experiment:
+  name: baseline
+
+model:
+  architecture: multitask  # shared backbone with pathology and density heads
+
+training:
+  # Hyperparameters will be specified when the training loop is implemented.
+  seed: 0
