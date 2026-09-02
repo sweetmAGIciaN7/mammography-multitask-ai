@@ -1,4 +1,4 @@
-"""Loss functions for multi-task INbreast training."""
+"""Ordinal multi-task loss for BI-RADS assessment + breast density."""
 
 from __future__ import annotations
 
@@ -6,47 +6,65 @@ import torch
 from torch import nn
 
 
-class MultiTaskLoss(nn.Module):
+class OrdinalMultiTaskLoss(nn.Module):
     """
-    Multi-task loss for:
+    Weighted ordinal loss for 5 ordered BI-RADS assessment classes.
 
-    - BI-RADS assessment: 5 classes
-    - Breast density: 4 classes
+    Threshold targets:
+        class 0 -> [0, 0, 0, 0]
+        class 1 -> [1, 0, 0, 0]
+        class 2 -> [1, 1, 0, 0]
+        class 3 -> [1, 1, 1, 0]
+        class 4 -> [1, 1, 1, 1]
 
-    Density target == -1 is ignored.
+    Density remains standard 4-class classification.
     """
 
     def __init__(
         self,
         assessment_weight: float = 1.0,
         density_weight: float = 1.0,
-        assessment_label_smoothing: float = 0.05,
         density_label_smoothing: float = 0.05,
-        assessment_class_weights=None,
+        threshold_pos_weights=None,
     ) -> None:
         super().__init__()
 
         self.assessment_weight = assessment_weight
         self.density_weight = density_weight
 
-        if assessment_class_weights is not None:
-            assessment_class_weights = torch.tensor(
-                assessment_class_weights,
-                dtype=torch.float32,
-            )
+        if threshold_pos_weights is None:
+            threshold_pos_weights = [
+                0.1963,
+                2.3590,
+                3.1587,
+                6.2778,
+            ]
 
         self.register_buffer(
-            "assessment_class_weights",
-            assessment_class_weights,
-        )
-
-        self.assessment_label_smoothing = (
-            assessment_label_smoothing
+            "threshold_pos_weights",
+            torch.tensor(
+                threshold_pos_weights,
+                dtype=torch.float32,
+            ),
         )
 
         self.density_loss_fn = nn.CrossEntropyLoss(
             label_smoothing=density_label_smoothing
         )
+
+    @staticmethod
+    def make_ordinal_targets(
+        assessment_target: torch.Tensor,
+    ) -> torch.Tensor:
+
+        thresholds = torch.arange(
+            4,
+            device=assessment_target.device,
+        )
+
+        return (
+            assessment_target.unsqueeze(1) > thresholds
+        ).float()
 
     def forward(
         self,
@@ -56,13 +74,17 @@ class MultiTaskLoss(nn.Module):
     ) -> dict[str, torch.Tensor]:
 
         assessment_logits = outputs["assessment_logits"]
+
         density_logits = outputs["density_logits"]
 
-        assessment_loss = nn.functional.cross_entropy(
+        ordinal_targets = self.make_ordinal_targets(
+            assessment_target
+        )
+
+        assessment_loss = nn.functional.binary_cross_entropy_with_logits(
             assessment_logits,
-            assessment_target.long(),
-            weight=self.assessment_class_weights,
-            label_smoothing=self.assessment_label_smoothing,
+            ordinal_targets,
+            pos_weight=self.threshold_pos_weights,
         )
 
         density_mask = density_target != -1

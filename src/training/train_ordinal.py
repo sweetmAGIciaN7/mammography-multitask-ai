@@ -1,4 +1,4 @@
-"""Two-stage training for BI-RADS assessment + breast density."""
+"""Two-stage training for ordinal BI-RADS assessment + breast density."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ import torch
 from torch.optim import AdamW
 
 from src.data.loaders import make_dataloaders
-from src.evaluation.metrics import evaluate_model
-from src.models.multitask_baseline import MultiTaskEfficientNetB0
-from src.training.losses import MultiTaskLoss
+from src.evaluation.ordinal_metrics import evaluate_ordinal_model
+from src.models.multitask_ordinal import MultiTaskOrdinalEfficientNetB0
+from src.training.ordinal_losses import OrdinalMultiTaskLoss
 
 
 def train_one_epoch(
@@ -39,7 +39,6 @@ def train_one_epoch(
         )
 
         loss = losses["loss"]
-
         loss.backward()
 
         torch.nn.utils.clip_grad_norm_(
@@ -115,7 +114,7 @@ def run_stage(
             device,
         )
 
-        val_metrics = evaluate_model(
+        val_metrics = evaluate_ordinal_model(
             model,
             val_loader,
             device,
@@ -126,7 +125,13 @@ def run_stage(
         print(f"  train_loss: {train_loss:.4f}")
         print(f"  val_loss:   {val_loss:.4f}")
 
-        for name, value in val_metrics.items():
+        scalar_metrics = {
+            k: v
+            for k, v in val_metrics.items()
+            if not hasattr(v, "__len__")
+        }
+
+        for name, value in scalar_metrics.items():
             print(f"  {name}: {value:.4f}")
 
         current_score = (
@@ -176,22 +181,14 @@ def main():
         seed=42,
     )
 
-    model = MultiTaskEfficientNetB0(
+    model = MultiTaskOrdinalEfficientNetB0(
         pretrained=True
     ).to(device)
 
-    criterion = MultiTaskLoss(
+    criterion = OrdinalMultiTaskLoss(
         assessment_weight=1.0,
         density_weight=1.0,
-        assessment_label_smoothing=0.05,
         density_label_smoothing=0.05,
-        assessment_class_weights=[
-            262 / (5 * 43),
-            262 / (5 * 141),
-            262 / (5 * 15),
-            262 / (5 * 27),
-            262 / (5 * 36),
-        ],
     ).to(device)
 
     checkpoint_dir = Path(
@@ -205,15 +202,12 @@ def main():
 
     checkpoint_path = (
         checkpoint_dir
-        / "best_multitask_assessment_density.pt"
+        / "best_multitask_ordinal.pt"
     )
 
     best_val_score = -1.0
 
-    # ----------------------------------------------------------
-    # Stage 1: freeze EfficientNet backbone
-    # ----------------------------------------------------------
-
+    # Stage 1: frozen backbone
     model.freeze_backbone()
 
     optimizer = AdamW(
@@ -238,10 +232,7 @@ def main():
         best_val_score=best_val_score,
     )
 
-    # ----------------------------------------------------------
-    # Stage 2: fine-tune whole network
-    # ----------------------------------------------------------
-
+    # Stage 2: fine-tune full network
     model.unfreeze_backbone()
 
     optimizer = AdamW(
@@ -273,13 +264,14 @@ def main():
     checkpoint = torch.load(
         checkpoint_path,
         map_location=device,
+        weights_only=False,
     )
 
     model.load_state_dict(
         checkpoint["model_state_dict"]
     )
 
-    test_metrics = evaluate_model(
+    test_metrics = evaluate_ordinal_model(
         model,
         test_loader,
         device,
@@ -289,7 +281,32 @@ def main():
     print("Test metrics:")
 
     for name, value in test_metrics.items():
+        if hasattr(value, "__len__"):
+            continue
+
         print(f"  {name}: {value:.4f}")
+
+    print()
+    print(
+        "Assessment F1 per class:",
+        test_metrics["assessment_f1_per_class"],
+    )
+
+    print("Assessment confusion matrix:")
+    print(
+        test_metrics["assessment_confusion_matrix"]
+    )
+
+    print()
+    print(
+        "Density F1 per class:",
+        test_metrics["density_f1_per_class"],
+    )
+
+    print("Density confusion matrix:")
+    print(
+        test_metrics["density_confusion_matrix"]
+    )
 
 
 if __name__ == "__main__":

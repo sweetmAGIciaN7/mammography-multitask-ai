@@ -1,4 +1,4 @@
-"""Evaluation metrics for INbreast multi-task models."""
+"""Evaluation metrics for ordinal BI-RADS assessment + density."""
 
 from __future__ import annotations
 
@@ -9,21 +9,13 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     confusion_matrix,
     f1_score,
+    mean_absolute_error,
     precision_recall_fscore_support,
 )
 
 
 @torch.no_grad()
-def evaluate_model(model, loader, device):
-    """
-    Evaluate:
-
-    - BI-RADS assessment classification: 5 classes
-    - Breast density classification: 4 classes
-
-    density_target == -1 is ignored.
-    """
-
+def evaluate_ordinal_model(model, loader, device):
     model.eval()
 
     assessment_targets = []
@@ -38,25 +30,27 @@ def evaluate_model(model, loader, device):
         outputs = model(images)
 
         # ------------------------------------------------------
-        # Assessment task
+        # Ordinal assessment
         # ------------------------------------------------------
 
-        assessment_pred = (
+        assessment_probs = torch.sigmoid(
             outputs["assessment_logits"]
-            .cpu()
-            .argmax(dim=1)
         )
+
+        passed_thresholds = (
+            assessment_probs > 0.5
+        ).sum(dim=1)
 
         assessment_targets.extend(
             batch["assessment_target"].numpy().tolist()
         )
 
         assessment_predictions.extend(
-            assessment_pred.numpy().tolist()
+            passed_thresholds.cpu().numpy().tolist()
         )
 
         # ------------------------------------------------------
-        # Density task
+        # Density
         # ------------------------------------------------------
 
         density_target = batch["density_target"]
@@ -93,10 +87,6 @@ def evaluate_model(model, loader, device):
         density_predictions
     )
 
-    # ----------------------------------------------------------
-    # Assessment metrics
-    # ----------------------------------------------------------
-
     assessment_precision, assessment_recall, assessment_f1, _ = (
         precision_recall_fscore_support(
             assessment_targets,
@@ -111,10 +101,6 @@ def evaluate_model(model, loader, device):
         assessment_predictions,
         labels=[0, 1, 2, 3, 4],
     )
-
-    # ----------------------------------------------------------
-    # Density metrics
-    # ----------------------------------------------------------
 
     density_precision, density_recall, density_f1, _ = (
         precision_recall_fscore_support(
@@ -132,7 +118,6 @@ def evaluate_model(model, loader, device):
     )
 
     return {
-        # Overall assessment metrics
         "assessment_accuracy": accuracy_score(
             assessment_targets,
             assessment_predictions,
@@ -147,14 +132,15 @@ def evaluate_model(model, loader, device):
             average="macro",
             zero_division=0,
         ),
-
-        # Assessment per-class metrics
+        "assessment_mae": mean_absolute_error(
+            assessment_targets,
+            assessment_predictions,
+        ),
         "assessment_precision_per_class": assessment_precision,
         "assessment_recall_per_class": assessment_recall,
         "assessment_f1_per_class": assessment_f1,
         "assessment_confusion_matrix": assessment_cm,
 
-        # Overall density metrics
         "density_accuracy": accuracy_score(
             density_targets,
             density_predictions,
@@ -169,8 +155,6 @@ def evaluate_model(model, loader, device):
             average="macro",
             zero_division=0,
         ),
-
-        # Density per-class metrics
         "density_precision_per_class": density_precision,
         "density_recall_per_class": density_recall,
         "density_f1_per_class": density_f1,
