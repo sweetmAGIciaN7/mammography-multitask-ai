@@ -1,69 +1,84 @@
+<div align="center">
+
 # Multi-Task Mammography Classification with Attention and Ordinal Assessment
 
-A compact PyTorch research/engineering project for **joint BI-RADS assessment classification and breast-density classification** on the INbreast mammography dataset.
+**Interpretable multi-task deep learning for joint BI-RADS assessment and breast-density classification on INbreast**
 
-The project explores whether a shared visual representation can support two related mammography tasks, and compares a weighted categorical baseline, a cumulative-threshold assessment variant, a shared channel-spatial attention model, and a task-specific dual-attention model.
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![PyTorch](https://img.shields.io/badge/framework-PyTorch-red)]()
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Status](https://img.shields.io/badge/status-research--educational-yellow)]()
 
-> **Scope:** this is an educational research project, not a clinical diagnostic system.  
-> The main assessment target is derived from BI-RADS assessment categories and is **not biopsy-confirmed pathology ground truth**.
+</div>
+
+> ⚠️ **Scope disclaimer.** This is an educational research / engineering project, **not** a clinical diagnostic system. The main target is derived from BI-RADS *assessment categories*, which are **not biopsy-confirmed pathology ground truth**. Nothing in this repository has undergone clinical validation and it must not be used for diagnosis, screening, or treatment decisions. See [§ Limitations](#12-limitations) and [§ Disclaimer](#disclaimer).
+
+---
+
+## Table of Contents
+
+1. [Motivation](#1-motivation)
+2. [Dataset](#2-dataset)
+3. [Problem Reformulation](#3-problem-reformulation)
+4. [Data Split](#4-data-split)
+5. [Preprocessing](#5-preprocessing)
+6. [Models](#6-models)
+7. [Training](#7-training)
+8. [Evaluation Protocol](#8-evaluation-protocol)
+9. [Results](#9-results)
+10. [Cumulative-Threshold Consistency Audit](#10-cumulative-threshold-consistency-audit)
+11. [Grad-CAM Analysis](#11-grad-cam-analysis)
+12. [Limitations](#12-limitations)
+13. [Reproducibility / Quickstart](#13-reproducibility--quickstart)
+14. [Repository Structure](#14-repository-structure)
+15. [Relation to Reference Work](#15-relation-to-reference-work)
+16. [Future Work](#16-future-work)
+17. [Citation](#17-citation)
+18. [License](#18-license)
+19. [Disclaimer](#disclaimer)
 
 ---
 
 ## 1. Motivation
 
-Mammograms contain information relevant to several related radiological tasks. Rather than training a separate network for every label, multi-task learning can test whether a shared representation helps the model learn complementary visual structure.
+Mammograms carry information relevant to several related radiological tasks. Rather than training one network per label, multi-task learning tests whether a **shared visual representation** helps a model learn complementary structure across tasks.
 
-This project was inspired by recent work on multi-task, attention-guided mammography models, but it is **not a reproduction of that paper**. The available dataset extract and metadata required a different, more conservative problem formulation.
+This project studies:
 
-The main questions explored here are:
+- Can a single EfficientNet-B0 backbone jointly predict **BI-RADS assessment** and **breast density**?
+- Does class weighting reduce collapse toward the majority assessment class?
+- Does a **cumulative-threshold (ordinal-inspired)** formulation help an inherently ordered target?
+- Does shared channel-spatial attention improve on a plain shared backbone?
+- Does a more complex **task-specific dual-attention** design outperform shared attention?
+- Which regions drive the model's predictions, per Grad-CAM?
 
-- Can one EfficientNet-B0 backbone jointly predict **BI-RADS assessment** and **breast density**?
-- Does class weighting reduce collapse toward the majority BI-RADS class?
-- Does a cumulative-threshold formulation help an ordered assessment target?
-- Does shared channel-spatial attention improve performance over a plain shared backbone?
-- Does a more complex task-specific dual-attention design outperform shared attention?
-- What regions influence the model's predictions according to Grad-CAM?
-
----
+The project was inspired by recent attention-guided multi-task work on mammography (see [§ 15](#15-relation-to-reference-work)), but it is **not a reproduction** of that work — the accessible dataset and metadata required a different, more conservative problem formulation.
 
 ## 2. Dataset
 
-The project uses **INbreast**, a full-field digital mammography dataset containing **410 mammograms from 115 cases**.
+[**INbreast**](https://doi.org/10.1016/j.acra.2011.09.014) — a full-field digital mammography dataset: **410 mammograms from 115 cases**.
 
-Reference:
+> Moreira, I. C., Amaral, I., Domingues, I., Cardoso, A., Cardoso, M. J., & Cardoso, J. S. *INbreast: Toward a Full-field Digital Mammographic Database.* Academic Radiology, 19(2), 236–248, 2012.
 
-> Moreira, I. C., Amaral, I., Domingues, I., Cardoso, A., Cardoso, M. J., & Cardoso, J. S.  
-> *INbreast: Toward a Full-field Digital Mammographic Database.*  
-> Academic Radiology, 19(2), 236–248, 2012.  
-> DOI: https://doi.org/10.1016/j.acra.2011.09.014
+A reproducibility audit (`scripts/audit_data.py`) verifies, on the local PNG extract:
 
-The local PNG extract contains 410 images. A reproducibility audit verifies:
-
-- 410 samples
-- 410 unique image IDs
-- 410 unique image paths
+- 410 samples, 410 unique image IDs, 410 unique image paths
 - one-to-one correspondence between PNG IDs and accessible metadata
-- no duplicate IDs or paths
-- no overlap between train, validation, and test image indices
-
-Run the audit with:
+- no duplicate IDs / paths
+- no overlap between train, validation, and test indices
 
 ```bash
 python -m scripts.audit_data
 ```
 
----
-
 ## 3. Problem Reformulation
 
-The reference work motivating this project uses binary pathology classification together with four-class density estimation. In the accessible metadata used here, however, the reliable labels available for the local images are BI-RADS assessment and ACR density.
-
-A binary target derived from BI-RADS categories would not be equivalent to biopsy-confirmed malignancy. For that reason, the main task was reformulated rather than presented as "cancer detection."
+The paper that motivated this project uses binary pathology classification alongside 4-class density estimation. In the **accessible** INbreast metadata used here, the only reliably present labels are **BI-RADS assessment** and **ACR density** — a binary target derived from BI-RADS is *not* equivalent to biopsy-confirmed malignancy. The task was therefore reformulated rather than mislabeled as "cancer detection."
 
 ### Task A — 5-class BI-RADS assessment
 
 | Model class | Source BI-RADS |
-|---:|---|
+|---|---|
 | 0 | BI-RADS 1 |
 | 1 | BI-RADS 2 |
 | 2 | BI-RADS 3 |
@@ -73,455 +88,295 @@ A binary target derived from BI-RADS categories would not be equivalent to biops
 ### Task B — 4-class breast density
 
 | Model class | ACR density |
-|---:|---|
+|---|---|
 | 0 | ACR 1 |
 | 1 | ACR 2 |
 | 2 | ACR 3 |
 | 3 | ACR 4 |
 
-One image has a missing density annotation. Its density target is encoded as `-1` and explicitly masked from density loss and density metrics.
-
----
+One image has a missing density annotation; its target is encoded as `-1` and masked out of both the density loss and density metrics.
 
 ## 4. Data Split
 
-A fixed image-level split with seed `42` is used:
+Fixed image-level split, seed `42`, stratified by the 5-class assessment target:
 
 | Split | Images | Fraction |
-|---|---:|---:|
+|---|---|---|
 | Train | 262 | 64% |
 | Validation | 65 | 16% |
 | Test | 83 | 20% |
 | **Total** | **410** | **100%** |
 
-The split is stratified by the 5-class assessment target.
-
-### Important limitation: image-level rather than patient-level split
-
-The accessible metadata used in this project does not provide a usable patient identifier for constructing a patient-grouped split. Therefore, the split is performed at the **image level**.
-
-This means that the project **cannot guarantee patient-level independence** between train, validation, and test subsets. This limitation should be considered when interpreting all reported metrics.
-
----
+**Known limitation — image-level, not patient-level split.** The accessible metadata does not expose a usable patient identifier, so patient-level independence between subsets **cannot be guaranteed**. Treat all reported metrics with this caveat in mind (see [§ 12](#12-limitations)).
 
 ## 5. Preprocessing
 
-Mammograms are loaded as grayscale images and converted to three channels for ImageNet-pretrained backbones.
+Mammograms are loaded grayscale and converted to 3 channels for ImageNet-pretrained backbones.
 
-Training preprocessing:
-
-- resize to `224 × 224`
-- grayscale → 3 channels
-- random horizontal flip (`p=0.5`)
-- brightness jitter (`±10%`)
-- contrast jitter (`±10%`)
-- ImageNet normalization
-
-Validation and test preprocessing are deterministic and do **not** use augmentation.
-
----
+| Stage | Transform |
+|---|---|
+| Train | resize `224×224`, grayscale→RGB, random horizontal flip (p=0.5), brightness jitter (±10%), contrast jitter (±10%), ImageNet normalization |
+| Val / Test | resize `224×224`, grayscale→RGB, ImageNet normalization (**no augmentation**) |
 
 ## 6. Models
 
-All experiments use **EfficientNet-B0** with ImageNet initialization.
+All variants share an **EfficientNet-B0** backbone (ImageNet-initialized) so that architectural comparisons are controlled.
 
-### 6.1 Weighted categorical baseline
+<details>
+<summary><b>6.1 Weighted categorical baseline</b></summary>
 
-A shared EfficientNet-B0 backbone feeds a shared 256-dimensional representation and two categorical heads:
+```
+Mammogram → EfficientNet-B0 → shared 256-d FC representation
+                                   ├── 5-class BI-RADS assessment (class-weighted)
+                                   └── 4-class density
+```
+</details>
 
-```text
-Mammogram
-   │
-EfficientNet-B0
-   │
-Shared FC representation
-   ├── 5-class BI-RADS assessment
-   └── 4-class density
+<details>
+<summary><b>6.2 Cumulative-threshold assessment variant</b></summary>
+
+The 5-class assessment head is replaced by 4 cumulative binary thresholds:
+
+```
+class 0 → [0,0,0,0]      class 3 → [1,1,1,0]
+class 1 → [1,0,0,0]      class 4 → [1,1,1,1]
+class 2 → [1,1,0,0]
 ```
 
-Assessment class weights are derived from the training split to reduce majority-class collapse.
+Thresholds are optimized independently, so **monotonicity is not structurally enforced** — see the audit in [§ 10](#10-cumulative-threshold-consistency-audit). Density remains a standard 4-class head.
+</details>
 
-### 6.2 Cumulative-threshold assessment variant
+<details>
+<summary><b>6.3 Shared channel-spatial attention</b></summary>
 
-The assessment task is replaced by four cumulative binary thresholds for five ordered classes:
-
-```text
-class 0 → [0, 0, 0, 0]
-class 1 → [1, 0, 0, 0]
-class 2 → [1, 1, 0, 0]
-class 3 → [1, 1, 1, 0]
-class 4 → [1, 1, 1, 1]
+```
+EfficientNet features → Channel attention → Spatial attention → GAP → shared representation
+                                                                          ├── Assessment
+                                                                          └── Density
 ```
 
-The density task remains a standard 4-class categorical head.
+A CBAM-style module inserted before global average pooling; both tasks read the same attended representation.
+</details>
 
-This variant is best described as **cumulative-threshold / ordinal-inspired**, because the four threshold outputs are optimized independently and strict monotonicity is not structurally enforced.
+<details>
+<summary><b>6.4 Task-specific dual-attention model</b></summary>
 
-### 6.3 Shared channel-spatial attention
-
-A CBAM-like channel-spatial attention module is placed after the EfficientNet feature extractor and before global pooling:
-
-```text
-EfficientNet features
-        │
-Channel attention
-        │
-Spatial attention
-        │
-Global average pooling
-        │
-Shared representation
-     ┌──┴──┐
-Assessment Density
 ```
-
-The same attended representation is used by both tasks.
-
-### 6.4 Task-specific dual-attention model
-
-The dual-attention model branches after the shared EfficientNet feature extractor:
-
-```text
                      ┌─ Assessment attention ─ FC ─ Assessment head
 EfficientNet features
                      └─ Density attention ───── FC ─ Density head
 ```
 
-This changes both the attention pathway **and** the post-pooling task representation, so it should be interpreted as a more complex **task-specific dual-branch architecture**, not as an isolated test of "two attention blocks."
-
----
+Branches after the shared backbone with **separate** attention pathways and post-pooling representations per task — a more complex design, not merely "two attention blocks."
+</details>
 
 ## 7. Training
 
-Training uses two stages:
+**Stage 1 — frozen backbone**: train attention / shared layers / heads · AdamW · `lr=1e-4` · `wd=1e-2`
+**Stage 2 — full fine-tuning**: unfreeze backbone · AdamW · `lr=5e-5` · `wd=5e-3`
 
-### Stage 1 — frozen backbone
-
-- train attention / shared layers / task heads
-- AdamW
-- learning rate: `1e-4`
-- weight decay: `1e-2`
-
-### Stage 2 — full fine-tuning
-
-- unfreeze the backbone
-- AdamW
-- learning rate: `5e-5`
-- weight decay: `5e-3`
-
-Additional settings:
-
-- batch size: `16`
-- image size: `224`
-- gradient clipping: norm `1.0`
-- assessment and density task weights: `1.0 / 1.0`
-- label smoothing: `0.05`
-- model selection: mean of validation assessment macro-F1 and density macro-F1
+| Setting | Value |
+|---|---|
+| Batch size | 16 |
+| Image size | 224 |
+| Gradient clipping | norm 1.0 |
+| Task weights (assessment / density) | 1.0 / 1.0 |
+| Label smoothing | 0.05 |
+| Checkpoint selection | mean of validation assessment macro-F1 and density macro-F1 |
 
 The best validation checkpoint is restored before test evaluation.
 
----
+## 8. Evaluation Protocol
 
-## 8. Evaluation
+| Task | Metrics |
+|---|---|
+| **Assessment** | Accuracy, Balanced Accuracy, Macro-F1, MAE (classes are ordered, so MAE penalizes distant confusions more than adjacent ones) |
+| **Density** | Accuracy, Balanced Accuracy, Macro-F1 |
 
-Primary metrics:
-
-### Assessment
-
-- Accuracy
-- Balanced Accuracy
-- Macro-F1
-- Mean Absolute Error (MAE)
-
-MAE is useful because the assessment classes are ordered: confusing BI-RADS 1 with BI-RADS 2 is less distant than confusing BI-RADS 1 with BI-RADS 5/6.
-
-### Density
-
-- Accuracy
-- Balanced Accuracy
-- Macro-F1
-
-Class-wise F1 scores and confusion matrices are also available in the evaluation code.
-
----
+Class-wise F1 and confusion matrices are available in `src/evaluation/metrics.py`.
 
 ## 9. Results
 
-All models below were evaluated on the same fixed 83-image test split.
+All models evaluated on the same fixed 83-image test split (`results/tables/model_comparison.csv`):
 
 | Model | Assessment Acc. | Assessment Bal. Acc. | Assessment Macro-F1 | Assessment MAE ↓ | Density Acc. | Density Bal. Acc. | Density Macro-F1 |
-|---|---:|---:|---:|---:|---:|---:|---:|
+|---|---|---|---|---|---|---|---|
 | Weighted categorical baseline | 0.265 | 0.237 | 0.209 | 1.506 | 0.518 | 0.401 | 0.373 |
 | Cumulative-threshold assessment | 0.253 | 0.274 | 0.193 | 1.229 | **0.639** | **0.513** | **0.488** |
 | **Shared attention** | **0.470** | **0.279** | **0.256** | **1.133** | 0.494 | 0.384 | 0.347 |
 | Dual attention | 0.386 | 0.249 | 0.237 | 1.253 | 0.482 | 0.367 | 0.329 |
 
-The source CSV is stored at:
+**Interpretation**
 
-```text
-results/tables/model_comparison.csv
-```
-
-### Interpretation
-
-**Shared attention produced the strongest assessment results.**  
-It achieved the highest assessment accuracy, balanced accuracy, and macro-F1, and the lowest assessment MAE.
-
-**The cumulative-threshold variant produced the strongest density results.**  
-However, density itself remained a standard categorical head. Therefore, the density improvement should **not** be interpreted as evidence that an ordinal density formulation was superior.
-
-**Dual attention increased model complexity without outperforming shared attention.**  
-The more separated task-specific design did not provide a clear benefit on this small dataset.
-
-**Class weighting improved the flat assessment formulation.**  
-This was introduced to reduce collapse toward the dominant assessment class in the training set.
-
----
+- **Shared attention** gives the strongest assessment results across every assessment metric.
+- **Cumulative-threshold** gives the strongest *density* results — but density is a plain categorical head there, so this is **not** evidence that ordinal density modeling helps; treat it as an incidental effect of that run.
+- **Dual attention** adds complexity without beating shared attention on this small dataset.
+- **Class weighting** meaningfully reduces collapse toward the dominant assessment class relative to the unweighted baseline.
 
 ## 10. Cumulative-Threshold Consistency Audit
 
-The cumulative-threshold assessment head does not enforce monotonic outputs by construction.
+The cumulative-threshold head does not enforce monotonic outputs by construction. A post-hoc audit found non-monotonic patterns (e.g. `[1,0,1,0]`) in:
 
-A post-hoc audit found non-monotonic threshold patterns in:
+- **15 / 65** validation images (23.1%)
+- **22 / 83** test images (26.5%)
 
-- **15 / 65 validation images (23.1%)**
-- **22 / 83 test images (26.5%)**
-
-For example, an output pattern such as `[1, 0, 1, 0]` is inconsistent with a strictly ordered cumulative model.
-
-Predictions in the current experiment are decoded by counting thresholds whose sigmoid probability exceeds `0.5`.
-
-Because the issue was identified after the main experiment, the decoder was **not changed post-hoc using test-set behavior**. The result is kept as a methodological limitation rather than retroactively optimizing the evaluation pipeline.
-
----
+Predictions are decoded by counting thresholds with sigmoid probability > 0.5. Because this was discovered *after* the main experiment, **the decoder was not changed post-hoc using test-set behavior** — the finding is reported as a methodological limitation, not silently patched. A strictly monotonic formulation (e.g. CORAL/CORN-style shared weights) is listed under [§ 16](#16-future-work).
 
 ## 11. Grad-CAM Analysis
 
-Grad-CAM was implemented for the shared-attention model to inspect gradient-based saliency for both task heads.
+Grad-CAM was computed for the shared-attention model on both task heads. These maps are:
 
-Importantly, these maps are:
+- **not** the model's learned attention weights,
+- **not** lesion segmentations,
+- **not** evidence of clinical validity —
 
-- **not** the learned attention weights themselves
-- **not** lesion segmentations
-- **not** evidence of clinical validity
+only qualitative saliency showing which backbone regions influenced a given prediction.
 
-They are qualitative saliency visualizations showing which intermediate backbone regions influenced a selected prediction.
+| Multi-example gallery | Assessment: mid vs. late layer | Density: mid vs. late layer |
+|---|---|---|
+| ![gallery](results/figures/gradcam_gallery_shared_attention.png) | ![assessment](results/figures/22580548_assessment_gradcam_comparison.png) | ![density](results/figures/22580548_density_gradcam_comparison.png) |
 
-### Multi-example gallery
+In the inspected examples, intermediate backbone layers produce more spatially localized maps than the final representation, with saliency often concentrated within breast tissue rather than background — a qualitative observation from selected examples, not a validated localization metric.
 
-![Shared-attention Grad-CAM gallery](results/figures/gradcam_gallery_shared_attention.png)
+## 12. Limitations
 
-The gallery includes selected correct and incorrect predictions for qualitative inspection.
+| Limitation | Detail |
+|---|---|
+| **Dataset size** | INbreast has only 410 images; rare assessment/density classes are underrepresented. |
+| **Image-level split** | No usable patient identifier in accessible metadata ⇒ same-patient leakage across subsets cannot be excluded. |
+| **Single split / seed** | All comparisons use one stratified split (seed 42); no multi-seed or patient-grouped CV yet. |
+| **Repeated hold-out inspection** | The same test split was consulted while comparing architectures during development. It was never used for gradient updates or checkpoint selection, but should not be treated as a fully untouched final benchmark. |
+| **Modest assessment performance** | Macro-F1 stays low across all variants — useful for *relative* comparison of design choices, not for deployment-level claims. |
+| **Ordinal monotonicity** | ~1/4 of cumulative-threshold predictions are non-monotonic (§ 10). |
+| **Grad-CAM is qualitative** | No lesion-localization accuracy or radiologist-agreement metric is computed. |
 
-### Mid-layer vs. late-layer comparison
-
-Assessment:
-
-![Assessment Grad-CAM layer comparison](results/figures/22580548_assessment_gradcam_comparison.png)
-
-Density:
-
-![Density Grad-CAM layer comparison](results/figures/22580548_density_gradcam_comparison.png)
-
-In the inspected examples, the intermediate backbone layer produced more spatially localized maps than the final backbone representation. Saliency was often concentrated within breast tissue rather than empty background, but this observation is qualitative and based on selected examples.
-
----
-
-## 12. Technical Audit
-
-Before finalizing the repository, the pipeline was audited for common experimental and implementation errors.
-
-Checks included:
-
-- PNG ↔ metadata one-to-one correspondence
-- duplicate image IDs and paths
-- target encoding
-- train / validation / test overlap
-- assessment stratification
-- preprocessing leakage
-- missing density masking
-- class-weight calculations
-- categorical logits / loss consistency
-- cumulative-threshold target construction
-- threshold positive weights
-- checkpoint selection
-- test-time metric calculation
-- Grad-CAM checkpoint identity
-- ordinal threshold consistency
-- stale clinical / pathology terminology
-
-### Audit outcome
-
-No critical implementation error requiring full retraining was identified.
-
-The main remaining issues are methodological limitations rather than hidden code failures.
-
----
-
-## 13. Limitations
-
-This project should be interpreted as a small-scale ML/CV research and engineering study.
-
-### Dataset size
-
-INbreast contains only 410 mammograms. Rare assessment and density classes have limited representation.
-
-### Image-level split
-
-Patient identifiers were not available in the accessible metadata used here, so a patient-level split could not be constructed. Potential same-patient correlation across subsets cannot be excluded.
-
-### Single primary split and seed
-
-The reported comparison is based on one fixed stratified split with seed `42`. Multi-seed evaluation or patient-grouped cross-validation would provide stronger estimates of robustness.
-
-### Repeated use of the same hold-out during model development
-
-The same fixed test split was used to compare several architecture iterations during development. The test set was not used for gradient updates or checkpoint selection, but repeated inspection means it should not be treated as a perfectly untouched final benchmark.
-
-### Modest BI-RADS assessment performance
-
-Assessment macro-F1 remains low across all variants. The results are useful for comparing design choices within this project, but they do not support claims of deployment-level performance.
-
-### Cumulative-threshold monotonicity
-
-The ordinal-inspired assessment model does not enforce monotonic threshold outputs; approximately one quarter of validation and test predictions violated monotonicity.
-
-### Grad-CAM is qualitative
-
-Grad-CAM is a saliency proxy. It does not establish lesion localization accuracy, causal reasoning, or agreement with radiologist attention.
-
----
-
-## 14. Reproducibility
-
-Install dependencies:
+## 13. Reproducibility / Quickstart
 
 ```bash
+git clone https://github.com/sweetmAGIciaN7/mammography-multitask-ai
+cd mammography-multitask-ai
 pip install -r requirements.txt
-```
 
-Run the data-integrity audit:
-
-```bash
+# 1. Verify data integrity
 python -m scripts.audit_data
-```
 
-Training entry points:
+# 2. Train (pick one or more)
+python -m src.training.train                  # weighted categorical baseline
+python -m src.training.train_ordinal           # cumulative-threshold variant
+python -m src.training.train_attention         # shared channel-spatial attention
+python -m src.training.train_dual_attention    # task-specific dual attention
 
-```bash
-python -m src.training.train
-python -m src.training.train_ordinal
-python -m src.training.train_attention
-python -m src.training.train_dual_attention
-```
-
-Evaluate saved experiments:
-
-```bash
+# 3. Evaluate all saved experiments
 python -m src.evaluation.compare_models
-```
 
-Generate Grad-CAM analyses:
-
-```bash
+# 4. Grad-CAM
 python -m src.evaluation.gradcam
 python -m src.evaluation.gradcam_gallery
 ```
 
-Model checkpoints and the INbreast dataset are intentionally excluded from version control.
+Model checkpoints and the INbreast dataset itself are **intentionally excluded** from version control (obtain INbreast directly from its [official source](http://medicalresearch.inescporto.pt/breastresearch/index.php); usage is subject to its own terms).
 
----
+## 14. Repository Structure
 
-## 15. Repository Structure
-
-```text
+```
 mammography-multitask-ai/
-├── configs/
-│   └── baseline.yaml
-├── data/
-│   └── README.md
-├── experiments/
-│   └── README.md
+├── configs/                 baseline.yaml
+├── data/                    README.md (data access notes; no raw data committed)
+├── experiments/             README.md (experiment tracking notes)
 ├── results/
-│   ├── figures/
-│   │   ├── 22580548_assessment_gradcam_comparison.png
-│   │   ├── 22580548_density_gradcam_comparison.png
-│   │   └── gradcam_gallery_shared_attention.png
-│   └── tables/
-│       └── model_comparison.csv
-├── scripts/
-│   └── audit_data.py
+│   ├── figures/              Grad-CAM galleries and layer comparisons
+│   └── tables/                model_comparison.csv
+├── scripts/                 audit_data.py
 ├── src/
-│   ├── data/
-│   │   ├── dataset.py
-│   │   ├── loaders.py
-│   │   ├── preprocessing.py
-│   │   └── splits.py
-│   ├── evaluation/
-│   │   ├── compare_models.py
-│   │   ├── gradcam.py
-│   │   ├── gradcam_gallery.py
-│   │   ├── metrics.py
-│   │   └── ordinal_metrics.py
-│   ├── models/
-│   │   ├── attention.py
-│   │   ├── multitask_attention.py
-│   │   ├── multitask_baseline.py
-│   │   ├── multitask_dual_attention.py
-│   │   └── multitask_ordinal.py
-│   └── training/
-│       ├── losses.py
-│       ├── ordinal_losses.py
-│       ├── train.py
-│       ├── train_attention.py
-│       ├── train_dual_attention.py
-│       └── train_ordinal.py
+│   ├── data/                 dataset.py, loaders.py, preprocessing.py, splits.py
+│   ├── evaluation/           compare_models.py, gradcam.py, gradcam_gallery.py,
+│   │                         metrics.py, ordinal_metrics.py
+│   ├── models/                attention.py, multitask_baseline.py,
+│   │                         multitask_attention.py, multitask_dual_attention.py,
+│   │                         multitask_ordinal.py
+│   └── training/             losses.py, ordinal_losses.py, train.py,
+│                             train_attention.py, train_dual_attention.py,
+│                             train_ordinal.py
+├── tests/
 ├── .gitignore
+├── LICENSE
 ├── README.md
 └── requirements.txt
 ```
 
----
+## 15. Relation to Reference Work
 
-## 16. Relation to the Reference Paper
+This project was motivated by:
 
-The project was motivated by:
+> Esen, G., Nurtas, M., La Paglia, L., Amankulov, J., Matkerim, B., & Altaibek, A. *Multi-Task Attention-Guided Deep Learning for Simultaneous Breast Cancer Detection and Density Estimation in Mammography.* IEEE Access, 13, 2025. DOI: [10.1109/ACCESS.2025.3634473](https://doi.org/10.1109/ACCESS.2025.3634473)
 
-> Esen, G., Nurtas, M., La Paglia, L., Amankulov, J., Matkerim, B., & Altaibek, A.  
-> *Multi-Task Attention-Guided Deep Learning for Simultaneous Breast Cancer Detection and Density Estimation in Mammography.*  
-> IEEE Access, 2025.  
-> DOI: https://doi.org/10.1109/ACCESS.2025.3634473
+That work combines binary malignancy classification with 4-class BI-RADS density (A–D) using six backbones (ResNet-50, DenseNet-121, EfficientNet-B0/B3/B7, MobileNetV3-Large), CBAM-style channel+spatial attention, stratified hold-out (64/16/20) plus 5-fold CV, and reports AUC up to 0.962 with extensive calibration analysis.
 
-That work combines binary malignancy/pathology classification with breast-density estimation and attention-guided CNNs.
+**This repository deliberately differs:**
 
-This repository intentionally differs in several ways:
+| Aspect | Reference paper | This repository |
+|---|---|---|
+| Primary target | Binary malignancy (benign/malignant) | 5-class BI-RADS **assessment** (ordinal-inspired) |
+| Ground truth | Framed as pathology | Explicitly **not** biopsy-confirmed; BI-RADS assessment only |
+| Backbones compared | 6 (ResNet-50 → EfficientNet-B7) | 1 fixed backbone (EfficientNet-B0) across 4 task/attention variants, for a controlled comparison |
+| Data augmentation | Extensive (multi-angle rotation + flips + CLAHE) | Light (flip + brightness/contrast jitter) to limit synthetic-artifact risk on n=410 |
+| Ordinality | Not modeled | Explicit cumulative-threshold variant, with a **documented non-monotonicity audit** |
+| Reported scope | Clinical framing, deployment recommendations | Educational framing; claims limited to what image-level, n=410 evidence supports |
 
-- the main target is **5-class BI-RADS assessment**, not binary malignancy
-- EfficientNet-B0 is used as the common backbone for controlled comparisons
-- the project compares categorical, cumulative-threshold, shared-attention, and dual-branch variants
-- Grad-CAM is used as a qualitative saliency tool
-- claims are limited to what the accessible labels and experimental protocol support
+The goal here is not to reproduce the paper's reported metrics, but to use its multi-task/attention ideas as a starting point for a **technically auditable** student research exercise — including reporting where results are weaker or more ambiguous than a clinical framing would suggest.
 
-The goal is not to reproduce the paper's reported clinical metrics, but to use its multi-task and attention ideas as a starting point for a technically auditable student research project.
+## 16. Future Work
 
----
+- Obtain reliable patient identifiers and repeat evaluation with a patient-grouped split.
+- Multi-seed or patient-grouped cross-validation with confidence intervals.
+- Evaluate on a second, larger public dataset (e.g. CBIS-DDSM) to stress-test conclusions.
+- Implement a strictly monotonic ordinal head (CORAL/CORN-style shared thresholds).
+- Quantify predictive uncertainty and calibration (Brier score, ECE, temperature scaling).
+- Validate Grad-CAM against expert lesion annotations rather than visual inspection alone.
+- Separate architecture selection from a genuinely untouched final test set.
 
-## 17. Future Work
+## 17. Citation
 
-The most meaningful next steps would be:
+If you use this code or refer to this analysis, please cite:
 
-- obtain reliable patient identifiers and repeat evaluation with a patient-grouped split
-- use multi-seed or patient-grouped cross-validation
-- evaluate larger mammography datasets
-- test a strictly monotonic ordinal formulation
-- quantify uncertainty and calibration
-- evaluate Grad-CAM against expert lesion annotations rather than visual inspection alone
-- separate architecture selection from a genuinely untouched final test set
+```bibtex
+@misc{mammography_multitask_ai,
+  author       = {sweetmAGIciaN7},
+  title        = {Multi-Task Mammography Classification with Attention and Ordinal Assessment},
+  year         = {2026},
+  howpublished = {\url{https://github.com/sweetmAGIciaN7/mammography-multitask-ai}},
+  note         = {Educational research project; not for clinical use}
+}
+```
 
----
+The dataset and the architectural ideas that motivated this project should also be cited:
+
+```bibtex
+@article{moreira2012inbreast,
+  title   = {INbreast: Toward a Full-field Digital Mammographic Database},
+  author  = {Moreira, Inês C. and Amaral, Igor and Domingues, Inês and Cardoso, Ana and Cardoso, Maria J. and Cardoso, Jaime S.},
+  journal = {Academic Radiology},
+  volume  = {19},
+  number  = {2},
+  pages   = {236--248},
+  year    = {2012},
+  doi     = {10.1016/j.acra.2011.09.014}
+}
+
+@article{esen2025multitask,
+  title   = {Multi-Task Attention-Guided Deep Learning for Simultaneous Breast Cancer Detection and Density Estimation in Mammography},
+  author  = {Esen, Gani and Nurtas, Marat and La Paglia, Laura and Amankulov, Jandos and Matkerim, Bazargul and Altaibek, Aizhan},
+  journal = {IEEE Access},
+  volume  = {13},
+  year    = {2025},
+  doi     = {10.1109/ACCESS.2025.3634473}
+}
+```
+
+## 18. License
+
+Released under the [MIT License](LICENSE). The INbreast dataset is **not** redistributed with this repository and is governed by its own terms — request access from the [official source](http://medicalresearch.inescporto.pt/breastresearch/index.php).
 
 ## Disclaimer
 
-This repository is for **educational and research purposes only**.
-
-It is not a medical device, has not undergone clinical validation, and should not be used for diagnosis, screening, treatment decisions, or patient care.
+This repository is for **educational and research purposes only**. It is not a medical device, has not undergone clinical validation, and must not be used for diagnosis, screening, treatment decisions, or patient care.
