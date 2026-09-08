@@ -74,10 +74,11 @@ lightning_logs/
 data/**
 !data/README.md
 
-# Experiment outputs and result files (keep directory placeholders)
+# Experiment outputs
 experiments/**
 !experiments/README.md
-results/figures/**
-!results/figures/.gitkeep
-results/tables/**
-!results/tables/.gitkeep
+
+# Model checkpoints are local only
+results/checkpoints/
+
+# Final figures and tables are intentionally tracked

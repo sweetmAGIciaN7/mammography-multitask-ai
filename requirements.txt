@@ -1,1 +1,8 @@
-# Runtime dependencies will be added when implementation begins.
+torch
+torchvision
+pandas
+numpy
+scikit-learn
+matplotlib
+Pillow
+PyYAML

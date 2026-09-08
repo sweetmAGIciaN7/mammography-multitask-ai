@@ -8,7 +8,10 @@ from torch import nn
 
 class OrdinalMultiTaskLoss(nn.Module):
     """
-    Weighted ordinal loss for 5 ordered BI-RADS assessment classes.
+    Cumulative-threshold loss for 5 ordered BI-RADS assessment classes.
+
+    The four binary thresholds are optimized independently, so monotonic
+    threshold consistency is not structurally enforced.
 
     Threshold targets:
         class 0 -> [0, 0, 0, 0]

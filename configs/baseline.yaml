@@ -1,12 +1,36 @@
-# Placeholder baseline experiment settings.
-# Dataset paths are not defined here; configure them locally when implementing training.
-
 experiment:
-  name: baseline
+  name: multitask_baseline
+  seed: 42
+
+data:
+  image_size: 224
+  batch_size: 16
+  split:
+    train: 0.64
+    validation: 0.16
+    test: 0.20
+  stratify_by: assessment_target
 
 model:
-  architecture: multitask  # shared backbone with pathology and density heads
+  backbone: efficientnet_b0
+  pretrained: true
+  tasks:
+    assessment:
+      type: categorical
+      num_classes: 5
+    density:
+      type: categorical
+      num_classes: 4
 
 training:
-  # Hyperparameters will be specified when the training loop is implemented.
-  seed: 0
+  stage_1:
+    epochs: 4
+    learning_rate: 0.0001
+    weight_decay: 0.01
+    freeze_backbone: true
+
+  stage_2:
+    epochs: 3
+    learning_rate: 0.00005
+    weight_decay: 0.005
+    freeze_backbone: false

@@ -1,4 +1,4 @@
-"""Evaluation metrics for ordinal BI-RADS assessment + density."""
+"""Evaluation metrics for cumulative-threshold BI-RADS assessment + density."""
 
 from __future__ import annotations
 
@@ -24,6 +24,9 @@ def evaluate_ordinal_model(model, loader, device):
     density_targets = []
     density_predictions = []
 
+    non_monotonic_count = 0
+    total_ordinal_predictions = 0
+
     for batch in loader:
         images = batch["image"].to(device)
 
@@ -36,6 +39,16 @@ def evaluate_ordinal_model(model, loader, device):
         assessment_probs = torch.sigmoid(
             outputs["assessment_logits"]
         )
+
+        threshold_passes = assessment_probs > 0.5
+
+        non_monotonic = (
+            threshold_passes[:, 1:].int()
+            > threshold_passes[:, :-1].int()
+        ).any(dim=1)
+
+        non_monotonic_count += int(non_monotonic.sum().item())
+        total_ordinal_predictions += int(non_monotonic.numel())
 
         passed_thresholds = (
             assessment_probs > 0.5
@@ -118,6 +131,12 @@ def evaluate_ordinal_model(model, loader, device):
     )
 
     return {
+        "assessment_non_monotonic_count": non_monotonic_count,
+        "assessment_non_monotonic_rate": (
+            non_monotonic_count / total_ordinal_predictions
+            if total_ordinal_predictions > 0
+            else 0.0
+        ),    
         "assessment_accuracy": accuracy_score(
             assessment_targets,
             assessment_predictions,

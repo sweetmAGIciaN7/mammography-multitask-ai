@@ -10,7 +10,7 @@ class MultiTaskEfficientNetB0(nn.Module):
     Multi-task baseline with a shared EfficientNet-B0 backbone.
 
     Outputs:
-    - diagnostic_logits: binary diagnostic prediction
+    - assessment_logits: 5-class BI-RADS assessment prediction
     - density_logits: 4-class breast density prediction
     """
 

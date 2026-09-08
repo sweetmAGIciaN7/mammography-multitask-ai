@@ -9,6 +9,7 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     confusion_matrix,
     f1_score,
+    mean_absolute_error,
     precision_recall_fscore_support,
 )
 
@@ -146,6 +147,11 @@ def evaluate_model(model, loader, device):
             assessment_predictions,
             average="macro",
             zero_division=0,
+        ),
+
+        "assessment_mae": mean_absolute_error(
+            assessment_targets,
+            assessment_predictions,
         ),
 
         # Assessment per-class metrics
