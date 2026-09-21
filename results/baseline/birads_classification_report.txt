@@ -1,0 +1,11 @@
+              precision    recall  f1-score   support
+
+   BI-RADS 1     0.6000    0.6000    0.6000        10
+   BI-RADS 2     0.6053    0.6970    0.6479        33
+   BI-RADS 3     0.0000    0.0000    0.0000         3
+   BI-RADS 4     0.0000    0.0000    0.0000         7
+   BI-RADS 5     0.4444    0.4444    0.4444         9
+
+    accuracy                         0.5323        62
+   macro avg     0.3299    0.3483    0.3385        62
+weighted avg     0.4834    0.5323    0.5061        62

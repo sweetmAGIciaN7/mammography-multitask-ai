@@ -1,246 +1,159 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Callable, Optional, Union
 
 import pandas as pd
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
 
-class InbreastDataset(Dataset):
+class InbreastMultiTaskDataset(Dataset):
     """
-    INbreast dataset loader for multi-task learning.
+    INbreast multi-task dataset.
 
-    Targets:
-    - diagnostic_target:
-        0 = BI-RADS-derived negative
-        1 = BI-RADS-derived positive
-       -1 = excluded from binary task (BI-RADS 3)
+    Returns:
+        {
+            "image": image,
+            "birads": birads_target,
+            "density": density_target,
+            "density_mask": density_mask,
+            "image_id": image_id,
+        }
 
-    - density_target:
-        0 = ACR 1
-        1 = ACR 2
-        2 = ACR 3
-        3 = ACR 4
-       -1 = missing density
+    BI-RADS classes in metadata.csv:
+        1, 2, 3, 4, 5
 
-    Important:
-    diagnostic_target is derived from BI-RADS assessment and is not
-    biopsy-confirmed pathology ground truth.
+    Converted to zero-based class indices:
+        0, 1, 2, 3, 4
+
+    Density ACR classes:
+        1, 2, 3, 4
+
+    Converted to zero-based class indices:
+        0, 1, 2, 3
+
+    One image has missing density.
+    For that sample:
+        density = 0   # placeholder only
+        density_mask = 0.0
+
+    For valid density samples:
+        density_mask = 1.0
     """
 
     def __init__(
         self,
-        root_dir: Union[str, Path],
-        metadata_csv: Union[str, Path],
-        transform: Optional[Callable] = None,
-    ) -> None:
-        self.root_dir = Path(root_dir)
+        metadata_csv,
+        root_dir=None,
+        transform=None,
+        dataframe=None,
+    ):
         self.metadata_csv = Path(metadata_csv)
+
+        if root_dir is None:
+            # metadata.csv is expected inside data/
+            # project root is therefore one level above data/
+            self.root_dir = self.metadata_csv.parent.parent
+        else:
+            self.root_dir = Path(root_dir)
+
         self.transform = transform
 
-        if not self.root_dir.is_dir():
-            raise FileNotFoundError(
-                f"Dataset root directory does not exist: {self.root_dir}"
-            )
+        if dataframe is None:
+            self.df = pd.read_csv(self.metadata_csv)
+        else:
+            self.df = dataframe.reset_index(drop=True).copy()
 
-        if not self.metadata_csv.is_file():
-            raise FileNotFoundError(
-                f"Metadata CSV does not exist: {self.metadata_csv}"
-            )
+        self._validate_metadata()
 
-        self.metadata = pd.read_csv(
-            self.metadata_csv,
-            sep=";",
-            dtype=str,
-        )
+    def _validate_metadata(self):
+        required_columns = {
+            "image_id",
+            "image_path",
+            "birads_class",
+            "density_acr",
+        }
 
-        required_columns = {"File Name", "ACR", "Bi-Rads"}
-        missing_columns = required_columns - set(self.metadata.columns)
+        missing_columns = required_columns - set(self.df.columns)
 
         if missing_columns:
             raise ValueError(
-                f"Metadata is missing required columns: "
+                f"Missing required metadata columns: "
                 f"{sorted(missing_columns)}"
             )
 
-        self.metadata["File Name"] = (
-            self.metadata["File Name"]
-            .fillna("")
-            .str.strip()
-        )
-
-        self.metadata["ACR"] = (
-            self.metadata["ACR"]
-            .fillna("")
-            .str.strip()
-        )
-
-        self.metadata["Bi-Rads"] = (
-            self.metadata["Bi-Rads"]
-            .fillna("")
-            .str.strip()
-            .str.lower()
-        )
-
-        if self.metadata["File Name"].duplicated().any():
-            duplicates = self.metadata.loc[
-                self.metadata["File Name"].duplicated(),
-                "File Name",
-            ].tolist()
-
+        if self.df["image_id"].duplicated().any():
             raise ValueError(
-                f"Duplicate File Name values found in metadata: {duplicates}"
+                "Duplicate image IDs found in dataset metadata."
             )
 
-        self.metadata_by_id = self.metadata.set_index("File Name")
+        invalid_birads = self.df[
+            ~self.df["birads_class"].isin([1, 2, 3, 4, 5])
+        ]
 
-        png_paths = sorted(
-            p
-            for p in self.root_dir.rglob("*")
-            if p.is_file() and p.suffix.lower() == ".png"
-        )
-
-        if not png_paths:
+        if len(invalid_birads):
             raise ValueError(
-                f"No PNG images found under {self.root_dir}"
+                "Invalid BI-RADS classes found:\n"
+                + invalid_birads[
+                    ["image_id", "birads_class"]
+                ].to_string(index=False)
             )
 
-        self.samples = []
+        valid_density = self.df["density_acr"].dropna()
 
-        for image_path in png_paths:
-            image_id = image_path.stem
+        invalid_density = valid_density[
+            ~valid_density.isin([1, 2, 3, 4])
+        ]
 
-            if image_id not in self.metadata_by_id.index:
-                raise ValueError(
-                    f"No metadata row found for image ID {image_id}"
-                )
-
-            row = self.metadata_by_id.loc[image_id]
-
-            diagnostic_target = self._encode_diagnostic_target(
-                row["Bi-Rads"]
-            )
-             
-            assessment_target = self._encode_assessment_target(
-                row["Bi-Rads"]
-            )
-
-            density_target = self._encode_density_target(
-                row["ACR"]
-            )
-
-            self.samples.append(
-                {
-                    "image_path": image_path,
-                    "image_id": image_id,
-                    "diagnostic_target": diagnostic_target,
-                    "assessment_target": assessment_target,
-                    "density_target": density_target,
-                }
-            )
-
-    @staticmethod
-    def _encode_diagnostic_target(birads: str) -> int:
-        """
-        BI-RADS-derived diagnostic target.
-
-        1, 2 -> negative (0)
-        3    -> excluded from binary task (-1)
-        4a, 4b, 4c, 5, 6 -> positive (1)
-        """
-
-        if birads in {"1", "2"}:
-            return 0
-
-        if birads == "3":
-            return -1
-
-        if birads in {"4a", "4b", "4c", "5", "6"}:
-            return 1
-
-        raise ValueError(
-            f"Unexpected Bi-Rads value: {birads!r}"
-        )
-
-    @staticmethod
-    def _encode_assessment_target(birads: str) -> int:
-        """
-        BI-RADS assessment target grouped into five classes.
-
-        1          -> 0
-        2          -> 1
-        3          -> 2
-        4a/4b/4c   -> 3
-        5/6        -> 4
-        """
-
-        if birads == "1":
-            return 0
-
-        if birads == "2":
-            return 1
-
-        if birads == "3":
-            return 2
-
-        if birads in {"4a", "4b", "4c"}:
-            return 3
-
-        if birads in {"5", "6"}:
-            return 4
-
-        raise ValueError(
-            f"Unexpected Bi-Rads value: {birads!r}"
-        )
-
-    @staticmethod
-    def _encode_density_target(acr: str) -> int:
-        """
-        ACR density target.
-
-        ACR 1 -> 0
-        ACR 2 -> 1
-        ACR 3 -> 2
-        ACR 4 -> 3
-        missing -> -1
-        """
-
-        if acr == "":
-            return -1
-
-        mapping = {
-            "1": 0,
-            "2": 1,
-            "3": 2,
-            "4": 3,
-        }
-
-        if acr not in mapping:
+        if len(invalid_density):
             raise ValueError(
-                f"Unexpected ACR value: {acr!r}"
+                "Invalid density ACR classes found."
             )
 
-        return mapping[acr]
+    def __len__(self):
+        return len(self.df)
 
-    def __len__(self) -> int:
-        return len(self.samples)
+    def __getitem__(self, index):
+        row = self.df.iloc[index]
 
-    def __getitem__(self, index: int):
-        sample = self.samples[index]
+        image_path = self.root_dir / row["image_path"]
 
-        image = Image.open(
-            sample["image_path"]
-        ).convert("L")
+        if not image_path.exists():
+            raise FileNotFoundError(
+                f"Image not found: {image_path}"
+            )
+
+        image = Image.open(image_path).convert("L")
 
         if self.transform is not None:
             image = self.transform(image)
 
+        # Zero-based class index:
+        # BI-RADS 1..5 -> 0..4
+        birads = int(row["birads_class"]) - 1
+
+        if pd.isna(row["density_acr"]):
+            # Placeholder target.
+            # Must be ignored in the density loss using density_mask.
+            density = 0
+            density_mask = 0.0
+        else:
+            # ACR 1..4 -> 0..3
+            density = int(row["density_acr"]) - 1
+            density_mask = 1.0
+
         return {
             "image": image,
-            "image_id": sample["image_id"],
-            "diagnostic_target": sample["diagnostic_target"],
-            "assessment_target": sample["assessment_target"],
-            "density_target": sample["density_target"],
+            "birads": torch.tensor(
+                birads,
+                dtype=torch.long,
+            ),
+            "density": torch.tensor(
+                density,
+                dtype=torch.long,
+            ),
+            "density_mask": torch.tensor(
+                density_mask,
+                dtype=torch.float32,
+            ),
+            "image_id": str(row["image_id"]),
         }
