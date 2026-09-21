@@ -1,0 +1,11 @@
+{
+  "dataset": "CBIS-DDSM",
+  "evaluation_type": "external_no_finetuning",
+  "total_images": 645,
+  "birads_evaluated": 595,
+  "density_evaluated": 643,
+  "birads_accuracy": 0.18319327731092436,
+  "birads_macro_f1": 0.0993262022157791,
+  "density_accuracy": 0.401244167962675,
+  "density_macro_f1": 0.338006892899985
+}
