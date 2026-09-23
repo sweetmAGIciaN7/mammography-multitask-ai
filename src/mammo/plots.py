@@ -67,3 +67,46 @@ def plot_leakage(folds: pd.DataFrame, path) -> None:
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     fig.savefig(path, dpi=160, facecolor=SURFACE)
     plt.close(fig)
+
+
+# Phase 3 ablation. Colour follows the model variant in every panel (categorical slots 1-4, validated).
+VARIANT_COLORS = {"mt_cbam": "#2a78d6", "mt_plain": "#eb6834", "st_path": "#1baf7a", "st_dens": "#eda100"}
+VARIANT_LABELS = {"mt_cbam": "Multi-task\n+ CBAM\n(paper design)", "mt_plain": "Multi-task\nno attention",
+                  "st_path": "Malignancy\nonly + CBAM", "st_dens": "Density\nonly + CBAM"}
+
+
+def plot_ablation(table: dict, comparisons: list, path) -> None:
+    """Two panels: malignancy AUC and density accuracy per variant, pooled out-of-fold with 95% CI."""
+    panels = [("malignancy", "auc_pooled", "auc_ci95", "Malignancy AUC (benign vs malignant)",
+               [("paper reports", PAPER_REPORTED["file_auc"], (5, 3)), ("chance", 0.5, (1, 2))]),
+              ("density", "accuracy", "accuracy_ci95", "Density accuracy (4 BI-RADS grades)",
+               [("paper reports", PAPER_REPORTED["density_accuracy"], (5, 3))])]
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5.0), facecolor=SURFACE)
+    for ax, (task, key, ci_key, title, refs) in zip(axes, panels):
+        _style(ax)
+        names = [n for n in VARIANT_COLORS if n in table and task in table[n]]
+        refs = list(refs)
+        if task == "density" and names:
+            refs.append(("always most common grade", table[names[0]][task]["majority_baseline_accuracy"], (1, 2)))
+        for i, n in enumerate(names):
+            r = table[n][task]
+            v, (lo, hi) = r[key], r[ci_key]
+            ax.bar(i, v, width=0.62, color=VARIANT_COLORS[n], edgecolor=SURFACE, linewidth=2, zorder=2)
+            ax.errorbar(i, v, yerr=[[v - lo], [hi - v]], color=TEXT, lw=1.4, capsize=5, zorder=3)
+            ax.text(i, hi + 0.02, f"{v:.3f}", ha="center", va="bottom", color=TEXT, fontsize=11,
+                    fontweight="bold", zorder=4)
+        key_txt = []
+        for label, y, dashes in refs:
+            _ref_line(ax, y, dashes)
+            key_txt.append(("- - -" if dashes[0] > 1 else "····") + f"  {label} {y:.2f}")
+        ax.text(0, 1.015, "      ".join(key_txt), transform=ax.transAxes, ha="left", va="bottom", color=TEXT2,
+                fontsize=8.5)
+        ax.set_xticks(range(len(names)), [VARIANT_LABELS[n] for n in names], color=TEXT, fontsize=9)
+        ax.set_ylim(0, 1.06)
+        ax.set_title(title, loc="left", color=TEXT, fontsize=12, fontweight="bold", pad=22)
+    axes[0].set_ylabel("Patient-level 5-fold CV, pooled (bars = 95% CI)", color=TEXT2)
+    fig.suptitle("CBIS-DDSM, leakage-free: does multi-task learning or attention help?", x=0.01, ha="left",
+                 color=TEXT, fontsize=14, fontweight="bold")
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.savefig(path, dpi=160, facecolor=SURFACE)
+    plt.close(fig)

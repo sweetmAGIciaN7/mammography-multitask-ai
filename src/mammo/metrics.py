@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, roc_auc_score
 
 
 def expected_calibration_error(y: np.ndarray, p: np.ndarray, n_bins: int = 15) -> float:
@@ -41,13 +41,59 @@ def multiclass_metrics(y: np.ndarray, prob: np.ndarray, ignore: int = -1) -> dic
     keep = y != ignore
     y, prob = y[keep], prob[keep]
     if len(y) == 0:
-        return {"accuracy": float("nan"), "macro_f1": float("nan"), "n": 0}
+        return {"accuracy": float("nan"), "macro_f1": float("nan"), "qwk": float("nan"), "n": 0}
     pred = prob.argmax(1)
+    labels = list(range(prob.shape[1]))
     return {
         "accuracy": float(accuracy_score(y, pred)),
-        "macro_f1": float(f1_score(y, pred, average="macro", labels=list(range(prob.shape[1])), zero_division=0)),
+        "macro_f1": float(f1_score(y, pred, average="macro", labels=labels, zero_division=0)),
+        "qwk": quadratic_kappa(y, pred, labels),
         "n": int(len(y)),
     }
+
+
+def quadratic_kappa(y: np.ndarray, pred: np.ndarray, labels=None) -> float:
+    """Quadratic-weighted Cohen's kappa: agreement for ordered classes (density A<B<C<D).
+    0 = chance level, 1 = perfect; being off by two grades costs 4x as much as being off by one."""
+    y, pred = np.asarray(y), np.asarray(pred)
+    if len(np.unique(np.concatenate([y, pred]))) < 2:
+        return float("nan")
+    return float(cohen_kappa_score(y, pred, labels=labels, weights="quadratic"))
+
+
+def auc_fn(y, p) -> float:
+    return float(roc_auc_score(y, p))
+
+
+def density_acc_fn(y, prob) -> float:
+    return float((np.asarray(prob).argmax(1) == np.asarray(y)).mean())
+
+
+def density_qwk_fn(y, prob) -> float:
+    return quadratic_kappa(y, np.asarray(prob).argmax(1), list(range(np.asarray(prob).shape[1])))
+
+
+def paired_bootstrap(y: np.ndarray, a: np.ndarray, b: np.ndarray, groups: np.ndarray, fn=auc_fn,
+                     n: int = 2000, seed: int = 0) -> dict:
+    """Is model A better than model B on the *same* test images?
+
+    Resamples whole patients (both models see the same resample each time) and reports
+    diff = fn(A) - fn(B), its 95% CI, and the share of resamples where A is not better
+    (a one-sided bootstrap p-value)."""
+    rng = np.random.default_rng(seed)
+    y, a, b, g = np.asarray(y), np.asarray(a), np.asarray(b), np.asarray(groups)
+    _, inv = np.unique(g, return_inverse=True)
+    members = [np.flatnonzero(inv == k) for k in range(inv.max() + 1)]
+    diffs = []
+    for _ in range(n):
+        pick = np.concatenate([members[i] for i in rng.integers(0, len(members), len(members))])
+        if y.ndim == 1 and len(np.unique(y[pick])) < 2:
+            continue
+        diffs.append(fn(y[pick], a[pick]) - fn(y[pick], b[pick]))
+    diffs = np.asarray(diffs)
+    lo, hi = np.nanpercentile(diffs, [2.5, 97.5])
+    return {"diff": float(fn(y, a) - fn(y, b)), "ci95": [float(lo), float(hi)],
+            "p_not_better": float(np.mean(diffs <= 0)), "n_boot": int(len(diffs))}
 
 
 def per_original(group: np.ndarray, y: np.ndarray, p: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
