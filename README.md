@@ -25,14 +25,41 @@ tuning until the numbers looked good, I audited the paper:
 Then I **tested it**: the same model, trained on the same images, with only the split changed.
 
 <!-- RESULTS:LEAKAGE -->
-*Phase 2 results are being computed. The chart will appear here.*
+![Leakage experiment](results/leakage/leakage_chart.png)
+
+EfficientNet-B0 with CBAM attention and two task heads, following the paper's architecture, loss weights and label
+smoothing. The data is the pre-augmented set the paper appears to use: 106 INbreast mass images × 72 copies =
+7,632 files from 50 patients. The model and training are identical in all three runs; 5-fold CV; 8 epochs; one
+free Kaggle T4.
+
+| Split | Test files whose original is in train | Malignancy AUC | Malignancy acc. | Density acc. |
+|---|---:|---:|---:|---:|
+| Paper protocol (augment, then split) | **100%** | **1.000** ± 0.000 | **1.000** | **1.000** |
+| Grouped by original image | 0% | 0.867 ± 0.066 | 0.828 | 0.689 |
+| Grouped by patient | 0% | **0.724** ± 0.093 | **0.697** | **0.403** |
+| *Trivial baseline (always predict the most common class)* | | *0.500* | *0.66* | *0.40* |
+
+Pooled out-of-fold AUC for the patient-grouped split: **0.755** (95% CI 0.667–0.835, cluster bootstrap over
+original images).
+
+**What this shows**
+
+1. **The paper's protocol produces near-perfect scores regardless of what the model learns.** On average ~57 of each test image's 71 rotated or flipped siblings are in the training set.
+   Our replication scores *higher* than the paper (1.000 vs 0.962): the protocol measures memorisation.
+2. **Grouping by image is not enough.** With image-level grouping, 97% of test images still had a
+   *different mammogram of the same patient* in training. Separating patients drops malignancy AUC from 0.87 to 0.72.
+3. **The density "skill" disappears completely.** With a patient-level split, density accuracy (0.403) equals always
+   guessing the most common category (0.401). The model had learned to recognise *patients*, not breast density.
+   That is unsurprising for 50 patients, and it matters for any multi-task claim made on this data.
+4. **Honest numbers on 106 images are uncertain.** Fold-to-fold AUC ranges from 0.62 to 0.82. Phase 3 therefore moves
+   to CBIS-DDSM (~1,500 patients, biopsy-confirmed labels) for the model-building work.
 
 ## Roadmap
 
 | Phase | Status | What |
 |---|---|---|
 | 1 | ✅ | Clean, tested codebase (`src/mammo`), v1 archived |
-| 2 | 🔄 | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
+| 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
 | 3 | ⏳ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
 | 4 | ⏳ | Calibration (temperature scaling) and external validation on INbreast |
 | 5 | ⏳ | Do attention maps point at lesions? Scored against radiologist ROI outlines |

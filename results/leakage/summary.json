@@ -1,0 +1,104 @@
+{
+ "config": {
+  "backbone": "efficientnet_b0",
+  "attention": true,
+  "pretrained": true,
+  "image_size": 224,
+  "epochs": 8,
+  "batch_size": 64,
+  "lr": 0.0002,
+  "weight_decay": 0.01,
+  "w_pathology": 2.0,
+  "w_density": 0.8,
+  "label_smoothing": 0.05,
+  "seed": 42,
+  "amp": true
+ },
+ "args": {
+  "data_root": "/kaggle/input",
+  "out": "/kaggle/working/results/leakage",
+  "protocols": [
+   "random",
+   "image",
+   "patient"
+  ],
+  "folds": 5,
+  "epochs": 8,
+  "backbone": "efficientnet_b0",
+  "seed": 42,
+  "smoke": false
+ },
+ "pooled": {
+  "image": {
+   "pooled_file_auc": 0.8671986393670666,
+   "ci95_clustered": [
+    0.793581673759003,
+    0.9305018166723673
+   ]
+  },
+  "patient": {
+   "pooled_file_auc": 0.7548313026305984,
+   "ci95_clustered": [
+    0.6673606951085781,
+    0.8349835599768151
+   ]
+  },
+  "random": {
+   "pooled_file_auc": 1.0,
+   "ci95_clustered": [
+    0.9999999999999999,
+    1.0
+   ]
+  }
+ },
+ "summary": {
+  "random": {
+   "file_auc_mean": 1.0,
+   "file_auc_std": 0.0,
+   "file_accuracy_mean": 1.0,
+   "file_accuracy_std": 0.0,
+   "original_auc_mean": 1.0,
+   "original_auc_std": 0.0,
+   "original_accuracy_mean": 1.0,
+   "original_accuracy_std": 0.0,
+   "density_accuracy_mean": 0.9998689384,
+   "density_accuracy_std": 0.0002930626,
+   "test_files_whose_original_is_in_train_mean": 1.0,
+   "test_files_whose_original_is_in_train_std": 0.0,
+   "test_files_whose_patient_is_in_train_mean": 1.0,
+   "test_files_whose_patient_is_in_train_std": 0.0
+  },
+  "image": {
+   "file_auc_mean": 0.8667425086,
+   "file_auc_std": 0.0661605872,
+   "file_accuracy_mean": 0.8277837903,
+   "file_accuracy_std": 0.0738119467,
+   "original_auc_mean": 0.9010718646,
+   "original_auc_std": 0.0813974434,
+   "original_accuracy_mean": 0.858008658,
+   "original_accuracy_std": 0.0592298922,
+   "density_accuracy_mean": 0.6890993266,
+   "density_accuracy_std": 0.0511177961,
+   "test_files_whose_original_is_in_train_mean": 0.0,
+   "test_files_whose_original_is_in_train_std": 0.0,
+   "test_files_whose_patient_is_in_train_mean": 0.9718614719,
+   "test_files_whose_patient_is_in_train_std": 0.0423601424
+  },
+  "patient": {
+   "file_auc_mean": 0.7241377874,
+   "file_auc_std": 0.0934984803,
+   "file_accuracy_mean": 0.6967510806,
+   "file_accuracy_std": 0.0728550135,
+   "original_auc_mean": 0.7540056022,
+   "original_auc_std": 0.0775879616,
+   "original_accuracy_mean": 0.6976796339,
+   "original_accuracy_std": 0.0667608119,
+   "density_accuracy_mean": 0.4027229214,
+   "density_accuracy_std": 0.1112816352,
+   "test_files_whose_original_is_in_train_mean": 0.0,
+   "test_files_whose_original_is_in_train_std": 0.0,
+   "test_files_whose_patient_is_in_train_mean": 0.0,
+   "test_files_whose_patient_is_in_train_std": 0.0
+  }
+ }
+}

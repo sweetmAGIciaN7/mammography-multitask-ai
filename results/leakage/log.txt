@@ -1,0 +1,214 @@
+=== Data ===
+augmented files       : 7632
+original images       : 106  (benign 35, malignant 71)
+patients              : 50
+copies per original   : min 72, median 72, max 72
+density known (files) : 100.0%
+
+=== Config ===
+{
+ "backbone": "efficientnet_b0",
+ "attention": true,
+ "pretrained": true,
+ "image_size": 224,
+ "epochs": 8,
+ "batch_size": 64,
+ "lr": 0.0002,
+ "weight_decay": 0.01,
+ "w_pathology": 2.0,
+ "w_density": 0.8,
+ "label_smoothing": 0.05,
+ "seed": 42,
+ "amp": true
+}
+device: cuda
+loaded (7632, 224, 224, 3) images in 8s
+
+=== Protocol: random - Paper protocol: split after augmentation ===
+  fold 1/5: train 6105 / test 1527 files (106 originals); test files with their original in train: 100%
+    epoch 1/8  loss 2.5881  (43s)
+    epoch 2/8  loss 1.4163  (14s)
+    epoch 3/8  loss 0.6286  (14s)
+    epoch 4/8  loss 0.3297  (14s)
+    epoch 5/8  loss 0.2358  (14s)
+    epoch 6/8  loss 0.2085  (14s)
+    epoch 7/8  loss 0.1972  (15s)
+    epoch 8/8  loss 0.1902  (15s)
+    -> file AUC 1.000  acc 1.000 | per-original AUC 1.000 | density acc 1.000
+  fold 2/5: train 6105 / test 1527 files (106 originals); test files with their original in train: 100%
+    epoch 1/8  loss 2.5046  (15s)
+    epoch 2/8  loss 1.4082  (15s)
+    epoch 3/8  loss 0.6258  (15s)
+    epoch 4/8  loss 0.3348  (15s)
+    epoch 5/8  loss 0.2501  (15s)
+    epoch 6/8  loss 0.2062  (15s)
+    epoch 7/8  loss 0.1937  (15s)
+    epoch 8/8  loss 0.1935  (15s)
+    -> file AUC 1.000  acc 1.000 | per-original AUC 1.000 | density acc 1.000
+  fold 3/5: train 6106 / test 1526 files (106 originals); test files with their original in train: 100%
+    epoch 1/8  loss 2.4229  (29s)
+    epoch 2/8  loss 1.6793  (15s)
+    epoch 3/8  loss 0.7886  (15s)
+    epoch 4/8  loss 0.4051  (15s)
+    epoch 5/8  loss 0.2700  (15s)
+    epoch 6/8  loss 0.2267  (14s)
+    epoch 7/8  loss 0.2059  (14s)
+    epoch 8/8  loss 0.1986  (15s)
+    -> file AUC 1.000  acc 1.000 | per-original AUC 1.000 | density acc 0.999
+  fold 4/5: train 6106 / test 1526 files (106 originals); test files with their original in train: 100%
+    epoch 1/8  loss 2.4831  (15s)
+    epoch 2/8  loss 1.4158  (15s)
+    epoch 3/8  loss 0.6135  (15s)
+    epoch 4/8  loss 0.3194  (15s)
+    epoch 5/8  loss 0.2460  (15s)
+    epoch 6/8  loss 0.2132  (15s)
+    epoch 7/8  loss 0.1960  (15s)
+    epoch 8/8  loss 0.1967  (15s)
+    -> file AUC 1.000  acc 1.000 | per-original AUC 1.000 | density acc 1.000
+  fold 5/5: train 6106 / test 1526 files (106 originals); test files with their original in train: 100%
+    epoch 1/8  loss 2.4462  (15s)
+    epoch 2/8  loss 1.4455  (15s)
+    epoch 3/8  loss 0.6301  (15s)
+    epoch 4/8  loss 0.3539  (15s)
+    epoch 5/8  loss 0.2565  (15s)
+    epoch 6/8  loss 0.2119  (15s)
+    epoch 7/8  loss 0.2031  (15s)
+    epoch 8/8  loss 0.2062  (15s)
+    -> file AUC 1.000  acc 1.000 | per-original AUC 1.000 | density acc 1.000
+
+=== Protocol: image - Grouped by original image ===
+  fold 1/5: train 6120 / test 1512 files (21 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.5440  (29s)
+    epoch 2/8  loss 1.2927  (15s)
+    epoch 3/8  loss 0.5075  (15s)
+    epoch 4/8  loss 0.2944  (15s)
+    epoch 5/8  loss 0.2154  (15s)
+    epoch 6/8  loss 0.1942  (14s)
+    epoch 7/8  loss 0.1918  (15s)
+    epoch 8/8  loss 0.1893  (15s)
+    -> file AUC 0.820  acc 0.837 | per-original AUC 0.822 | density acc 0.680
+  fold 2/5: train 6120 / test 1512 files (21 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.5026  (15s)
+    epoch 2/8  loss 1.2624  (15s)
+    epoch 3/8  loss 0.4667  (15s)
+    epoch 4/8  loss 0.2549  (15s)
+    epoch 5/8  loss 0.2103  (15s)
+    epoch 6/8  loss 0.1949  (15s)
+    epoch 7/8  loss 0.1907  (15s)
+    epoch 8/8  loss 0.1882  (15s)
+    -> file AUC 0.776  acc 0.712 | per-original AUC 0.806 | density acc 0.675
+  fold 3/5: train 6120 / test 1512 files (21 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4133  (15s)
+    epoch 2/8  loss 1.5679  (15s)
+    epoch 3/8  loss 0.6466  (15s)
+    epoch 4/8  loss 0.3546  (15s)
+    epoch 5/8  loss 0.2488  (15s)
+    epoch 6/8  loss 0.2126  (15s)
+    epoch 7/8  loss 0.1997  (15s)
+    epoch 8/8  loss 0.2008  (15s)
+    -> file AUC 0.900  acc 0.893 | per-original AUC 0.962 | density acc 0.619
+  fold 4/5: train 6120 / test 1512 files (21 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4774  (15s)
+    epoch 2/8  loss 1.2974  (15s)
+    epoch 3/8  loss 0.4949  (15s)
+    epoch 4/8  loss 0.2507  (15s)
+    epoch 5/8  loss 0.2225  (15s)
+    epoch 6/8  loss 0.2032  (15s)
+    epoch 7/8  loss 0.1857  (15s)
+    epoch 8/8  loss 0.1846  (15s)
+    -> file AUC 0.903  acc 0.810 | per-original AUC 0.933 | density acc 0.757
+  fold 5/5: train 6048 / test 1584 files (22 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4408  (28s)
+    epoch 2/8  loss 1.3725  (14s)
+    epoch 3/8  loss 0.4948  (15s)
+    epoch 4/8  loss 0.2839  (15s)
+    epoch 5/8  loss 0.2272  (14s)
+    epoch 6/8  loss 0.2018  (14s)
+    epoch 7/8  loss 0.1906  (14s)
+    epoch 8/8  loss 0.1856  (15s)
+    -> file AUC 0.935  acc 0.888 | per-original AUC 0.982 | density acc 0.714
+
+=== Protocol: patient - Grouped by patient ===
+  fold 1/5: train 6264 / test 1368 files (19 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.5603  (29s)
+    epoch 2/8  loss 1.2275  (15s)
+    epoch 3/8  loss 0.4640  (16s)
+    epoch 4/8  loss 0.2752  (15s)
+    epoch 5/8  loss 0.2188  (15s)
+    epoch 6/8  loss 0.1967  (15s)
+    epoch 7/8  loss 0.1919  (15s)
+    epoch 8/8  loss 0.1898  (15s)
+    -> file AUC 0.821  acc 0.662 | per-original AUC 0.821 | density acc 0.339
+  fold 2/5: train 5976 / test 1656 files (23 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4731  (29s)
+    epoch 2/8  loss 1.2034  (14s)
+    epoch 3/8  loss 0.4525  (15s)
+    epoch 4/8  loss 0.2639  (15s)
+    epoch 5/8  loss 0.2138  (14s)
+    epoch 6/8  loss 0.1952  (14s)
+    epoch 7/8  loss 0.1839  (14s)
+    epoch 8/8  loss 0.1822  (14s)
+    -> file AUC 0.648  acc 0.801 | per-original AUC 0.783 | density acc 0.492
+  fold 3/5: train 6192 / test 1440 files (20 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4223  (20s)
+    epoch 2/8  loss 1.5820  (15s)
+    epoch 3/8  loss 0.5278  (15s)
+    epoch 4/8  loss 0.2848  (15s)
+    epoch 5/8  loss 0.2172  (15s)
+    epoch 6/8  loss 0.2002  (15s)
+    epoch 7/8  loss 0.1941  (15s)
+    epoch 8/8  loss 0.1852  (15s)
+    -> file AUC 0.820  acc 0.736 | per-original AUC 0.798 | density acc 0.276
+  fold 4/5: train 5832 / test 1800 files (25 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4700  (30s)
+    epoch 2/8  loss 1.2655  (14s)
+    epoch 3/8  loss 0.4333  (14s)
+    epoch 4/8  loss 0.2470  (15s)
+    epoch 5/8  loss 0.2150  (14s)
+    epoch 6/8  loss 0.1890  (14s)
+    epoch 7/8  loss 0.1818  (14s)
+    epoch 8/8  loss 0.1815  (14s)
+    -> file AUC 0.710  acc 0.670 | per-original AUC 0.743 | density acc 0.363
+  fold 5/5: train 6264 / test 1368 files (19 originals); test files with their original in train: 0%
+    epoch 1/8  loss 2.4223  (15s)
+    epoch 2/8  loss 1.3775  (15s)
+    epoch 3/8  loss 0.4859  (15s)
+    epoch 4/8  loss 0.2772  (15s)
+    epoch 5/8  loss 0.2197  (15s)
+    epoch 6/8  loss 0.1909  (15s)
+    epoch 7/8  loss 0.1842  (15s)
+    epoch 8/8  loss 0.1819  (15s)
+    -> file AUC 0.621  acc 0.614 | per-original AUC 0.625 | density acc 0.544
+
+=== RESULT (mean over folds) ===
+          file_auc_mean  file_accuracy_mean  original_auc_mean  density_accuracy_mean
+protocol                                                                             
+random            1.000               1.000              1.000                  1.000
+image             0.867               0.828              0.901                  0.689
+patient           0.724               0.697              0.754                  0.403
+
+Pooled AUC with 95% CI (bootstrap over original images): {
+ "image": {
+  "pooled_file_auc": 0.8671986393670666,
+  "ci95_clustered": [
+   0.793581673759003,
+   0.9305018166723673
+  ]
+ },
+ "patient": {
+  "pooled_file_auc": 0.7548313026305984,
+  "ci95_clustered": [
+   0.6673606951085781,
+   0.8349835599768151
+  ]
+ },
+ "random": {
+  "pooled_file_auc": 1.0,
+  "ci95_clustered": [
+   0.9999999999999999,
+   1.0
+  ]
+ }
+}
+
+Total time 32.9 min. Outputs in /kaggle/working/results/leakage

@@ -43,6 +43,7 @@ def _smoke_subset(df: pd.DataFrame, n_per_class: int = 6, copies: int = 6, seed:
 
 def summarise(folds: pd.DataFrame) -> pd.DataFrame:
     cols = ["file_auc", "file_accuracy", "original_auc", "original_accuracy", "density_accuracy",
+            "pathology_majority_accuracy", "density_majority_accuracy",
             "test_files_whose_original_is_in_train", "test_files_whose_patient_is_in_train"]
     agg = folds.groupby("protocol")[cols].agg(["mean", "std"])
     agg.columns = [f"{c}_{s}" for c, s in agg.columns]
@@ -113,7 +114,14 @@ def main(argv=None) -> int:
             yo, po = per_original(df["image_id"].to_numpy()[te], y_path[te], p["pathology"])
             m_orig = binary_metrics(yo, po)
             m_dens = multiclass_metrics(y_dens[te], p["density"])
+            # "always predict the most common training class" baselines
+            path_major = int(np.bincount(y_path[tr]).argmax())
+            dens_tr = y_dens[tr][y_dens[tr] >= 0]
+            dens_major = int(np.bincount(dens_tr).argmax()) if len(dens_tr) else -1
+            dens_te = y_dens[te][y_dens[te] >= 0]
             row = {"protocol": protocol, "fold": k + 1, **leak,
+                   "pathology_majority_accuracy": float((y_path[te] == path_major).mean()),
+                   "density_majority_accuracy": float((dens_te == dens_major).mean()) if len(dens_te) else float("nan"),
                    **{f"file_{n}": v for n, v in m_file.items()},
                    **{f"original_{n}": v for n, v in m_orig.items()},
                    **{f"density_{n}": v for n, v in m_dens.items()}}

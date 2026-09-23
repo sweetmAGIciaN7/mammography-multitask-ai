@@ -31,9 +31,10 @@ with masses"* (Data in Brief 31:105928). That public dataset contains **106 INbr
 preprocessed with CLAHE (as mentioned in Sec. III-B). The paper's dataset is therefore very likely ~106 original
 mammograms at ~70 copies each, not 410 independent images as the abstract states.
 
-🧪 **Tested in Phase 2** ([`notebooks/02_leakage_experiment.ipynb`](notebooks/02_leakage_experiment.ipynb)): the same
-model is trained on that dataset with (a) the paper's random split, (b) a split grouped by original image, and
-(c) a split grouped by patient.
+🧪 **Tested in Phase 2** ([`notebooks/02_leakage_experiment.ipynb`](notebooks/02_leakage_experiment.ipynb),
+[results](results/leakage/)). The paper's architecture was trained on that dataset three times, changing only the split.
+The paper's split gave malignancy AUC **1.000**. Grouping by patient gave **0.724 ± 0.093**. Density accuracy fell from
+1.000 to **0.403**, the same as always predicting the most common class (0.401).
 
 ## 2. The reported accuracies imply an augmented test set
 
