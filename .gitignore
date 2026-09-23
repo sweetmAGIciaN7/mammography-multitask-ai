@@ -82,3 +82,8 @@ experiments/**
 results/checkpoints/
 
 # Final figures and tables are intentionally tracked
+
+# Archives and large local files
+*.zip
+*.dcm
+*.bundle
