@@ -1,4 +1,4 @@
-"""Phase 6: single-image inference and rendering for the public demo (Hugging Face Space, ``demo/app.py``).
+"""Phase 6: single-image inference and rendering for the public demo (Streamlit, ``demo/streamlit_app.py``).
 
 The demo runs the **paper-design model trained on the official CBIS-DDSM training split** (``mt_cbam``, Phase 4)
 on one uploaded mammogram and shows:

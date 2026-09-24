@@ -87,3 +87,6 @@ results/checkpoints/
 *.zip
 *.dcm
 *.bundle
+
+# Demo weights are tracked (small, needed by the online demo)
+!demo/model.pt

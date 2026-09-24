@@ -51,13 +51,26 @@ def test_pick_examples_is_stratified_and_deterministic():
     assert list(E.pick_examples(test, 3, 1)["image_id"]) != list(a["image_id"])
 
 
-def test_space_files(tmp_path):
-    E.space_files(tmp_path)
-    for f in ("app.py", "requirements.txt", "README.md", "mammo/demo.py", "mammo/model.py", "mammo/preprocess.py"):
-        assert (tmp_path / f).exists(), f
-    card = (tmp_path / "README.md").read_text()
-    assert card.startswith("---") and "sdk: gradio" in card and "app_file: app.py" in card
-    assert not list(tmp_path.rglob("__pycache__"))
+def test_density_letters_follow_cbis_coding():
+    """CBIS-DDSM density 1-4 is stored as 0-3 (see mammo.cbis); the example table must use the same mapping."""
+    assert [E.DENS[k] for k in range(4)] == ["A", "B", "C", "D"]
+
+
+def test_save_example_is_lossless(tmp_path):
+    from conftest import _fake_mammogram
+    from mammo.preprocess import load_mammogram
+    src = tmp_path / "m.jpg"
+    Image.fromarray(_fake_mammogram(False, h=2000, w=1200, lesion=True)).save(src, quality=90)
+    E.save_example(str(src), tmp_path / "m.png", 640, 384)
+    assert np.array_equal(load_mammogram(src), load_mammogram(tmp_path / "m.png"))
+
+
+def test_streamlit_app_files():
+    demo = E.ROOT / "demo"
+    app = (demo / "streamlit_app.py").read_text()
+    assert "load_demo_model" in app and "st.cache_resource" in app and "DISCLAIMER" in app
+    req = (demo / "requirements.txt").read_text()
+    assert "streamlit" in req and "download.pytorch.org/whl/cpu" in req
 
 
 def test_repo_inputs_exist():
@@ -117,7 +130,7 @@ def test_build_end_to_end(fake_cbis, tmp_path):
     files = [f for f in files if Image.open(f).size[0] > 100][:6]
     test = pd.DataFrame({"image_id": [f"P_{k}" for k in range(len(files))],
                          "path": [f"CBIS-DDSM/jpeg/{f.parent.name}/{f.name}" for f in files],
-                         "pathology": [k % 2 for k in range(len(files))], "density": [1 + k % 4 for k in range(len(files))],
+                         "pathology": [k % 2 for k in range(len(files))], "density": [k % 4 for k in range(len(files))],
                          "lesion_type": "mass"})
     test.to_csv(tmp_path / "t.csv", index=False)
     # "Phase 5" predictions from the same untrained model
@@ -125,11 +138,17 @@ def test_build_end_to_end(fake_cbis, tmp_path):
     ck.setdefault("calibration", {})
     preds = [D.predict_file(model, ck, jpeg / p.split("jpeg/")[1])["p_malignant_raw"] for p in test["path"]]
     pd.DataFrame({"image_id": test["image_id"], "p_malignant_mt_cbam": preds}).to_csv(tmp_path / "p.csv", index=False)
-    out, rep = tmp_path / "space", tmp_path / "rep"
-    rc = E.main(["build", "--out", str(out), "--report", str(rep), "--ckpt", str(ck_dir), "--cbis-root", str(fake_cbis),
+    out, rep = tmp_path / "demo", tmp_path / "rep"
+    rc = E.main(["build", "--out", str(out), "--report", str(rep), "--zip", str(tmp_path / "demo_bundle.zip"),
+                 "--ckpt", str(ck_dir), "--cbis-root", str(fake_cbis),
                  "--test-images", str(tmp_path / "t.csv"), "--predictions", str(tmp_path / "p.csv"), "--n-per-class", "2"])
     assert rc == 0
     ex = pd.read_csv(out / "examples/examples.csv")
     assert len(ex) == 4 and set(ex["pathology"]) == {"malignant", "benign"}
     assert (out / "model.pt").exists() and (rep / "demo_preview.png").exists()
-    assert json.load(open(rep / "demo_check.json"))["max_abs_diff_vs_phase5"] < 1e-4
+    chk = json.load(open(rep / "demo_check.json"))
+    assert chk["max_abs_diff_vs_phase5"] < 1e-4 and chk["max_abs_diff_example_vs_original"] < 1e-6
+    assert set(ex["density"]) <= set("ABCD")
+    import zipfile
+    names = zipfile.ZipFile(tmp_path / "demo_bundle.zip").namelist()
+    assert "model.pt" in names and "examples/examples.csv" in names and "examples/example_1.png" in names
