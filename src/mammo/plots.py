@@ -326,7 +326,7 @@ def plot_localisation(s: dict, path) -> None:
         ax.set_title(title, loc="left", color=TEXT, fontsize=10, fontweight="bold")
     axes[0].set_yticks(ypos, [method_label(m) for m in methods], color=TEXT, fontsize=8.5)
     h, l = axes[0].get_legend_handles_labels()
-    leg = fig.legend(h, l, loc="upper right", ncol=3, frameon=False, fontsize=9, bbox_to_anchor=(0.995, 0.955),
+    leg = fig.legend(h, l, loc="upper right", ncol=3, frameon=False, fontsize=9, bbox_to_anchor=(0.995, 0.985),
                      title="lesion subset (lines = 95% CI)")
     leg.get_title().set_color(TEXT2); leg.get_title().set_fontsize(8.5)
     for t in leg.get_texts():
@@ -334,6 +334,6 @@ def plot_localisation(s: dict, path) -> None:
     fig.suptitle(f"Do the maps point at the lesion? CBIS-DDSM official test, {s['n_images']} images with ROI masks\n"
                  f"shaded rows: maps that know nothing about lesions, and the best a 20x12 map could do",
                  x=0.01, ha="left", color=TEXT, fontsize=12, fontweight="bold")
-    fig.tight_layout(rect=(0, 0, 1, 0.9))
+    fig.tight_layout(rect=(0, 0, 1, 0.945))
     fig.savefig(path, dpi=150, facecolor=SURFACE)
     plt.close(fig)

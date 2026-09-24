@@ -122,7 +122,8 @@ leaks too unless it is re-checked at the patient level.
    networks, so its practical value is efficiency (one model instead of two), not accuracy.
 3. **CBAM attention gives a small malignancy gain (+0.013 AUC).** It is statistically detectable across patients,
    but it comes from a single training seed and is small next to the fold-to-fold spread (±0.025). Whether the
-   attention maps actually point at lesions is tested in Phase 5.
+   attention maps actually point at lesions is tested in
+   [Phase 5](#phase-5-do-the-attention-maps-point-at-the-lesion): mostly they don't.
 4. **Density is learnable on this data.** QWK is 0.77, and most errors are between neighbouring grades. On the 50
    patients of Phase 2, density was at chance.
 5. **Calcifications are the hard case.** AUC is 0.83 on images with masses but 0.72 on images with only
@@ -226,6 +227,86 @@ Paired comparisons on INbreast (bootstrap over patients): multi-task vs density-
 5. **The pipeline is reproducible.** Retraining the paper-design model with the same seed reproduced the Phase 3
    official-split numbers to three decimals (AUC 0.746, density QWK 0.711).
 
+## Phase 5: do the attention maps point at the lesion?
+
+The paper says its attention "strongly concentrates on irregular mass margins, architectural distortions and
+suspicious microcalcifications". It supports this with four pictures (two of them misclassified) and attention
+statistics that have no stated method. Nobody compared the maps with lesion outlines. CBIS-DDSM has a
+radiologist-drawn ROI mask for every finding, so Phase 5 scores the maps against those outlines and against maps
+that know nothing about lesions.
+
+**Setup.** Official CBIS-DDSM test split (patients the models never saw), the four Phase 4 models (not retrained;
+predictions reproduce Phase 4, AUC 0.746 → 0.746). ROI masks are identified by content (a binary image the size of
+the mammogram) and sent through the image's own crop / flip / resize; 376 of 390 abnormalities have a usable mask, on
+354 of 368 images from 206 patients ([mask check](results/attention/mask_preview.png)). Scoring is done inside the
+breast only. 95% CIs come from a bootstrap over patients.
+
+- **Maps:** the CBAM spatial attention (a sigmoid gate on the 20×12 feature map), and Grad-CAM on the last backbone
+  feature map (before CBAM, the same layer for every model) for the malignancy logit and the predicted density class.
+- **Baselines that know nothing about lesions:** uniform, random, "brightest tissue" (image intensity per cell),
+  "breast centre" (a Gaussian on the breast's centre of mass), and a control network that never saw a mammogram
+  (ImageNet backbone, random CBAM and heads). The **ceiling** is the ROI mask itself pooled to 20×12: the best any
+  map of this resolution can do.
+- **Metrics:** pointing game (the map's maximum lies on the lesion, strictly or within one 32-pixel cell), energy
+  in lesion (share of the map's mass on the lesion; chance = the lesion's share of the breast, 1.8% on average),
+  pixel AUC (lesion vs other breast pixels; chance = 0.5), top-10% IoU. Definitions are in
+  [`src/mammo/localization.py`](src/mammo/localization.py).
+
+<!-- RESULTS:ATTENTION -->
+![Localisation of attention maps](results/attention/localisation_chart.png)
+
+| Map (354 test images) | Pointing, ±1 cell | Energy in lesion | Pixel AUC |
+|---|---:|---:|---:|
+| **CBAM attention, paper design** | **0.24** (0.19–0.29) | **0.019** (0.016–0.024) | **0.69** (0.66–0.72) |
+| CBAM attention, malignancy-only model | 0.36 (0.31–0.42) | 0.020 | 0.71 |
+| CBAM attention, density-only model | 0.19 (0.15–0.24) | 0.019 | 0.67 |
+| **Grad-CAM malignancy, paper design** | **0.44** (0.38–0.50) | **0.103** (0.085–0.121) | **0.72** (0.68–0.76) |
+| Grad-CAM malignancy, no-attention model | 0.42 (0.36–0.48) | 0.106 | 0.71 |
+| Grad-CAM density, paper design | 0.19 (0.14–0.23) | 0.031 | 0.53 |
+| *Control: ImageNet-only network, Grad-CAM* | *0.15* | *0.028* | *0.61* |
+| *Baseline: brightest tissue* | *0.18* (0.14–0.22) | *0.022* | *0.67* |
+| *Baseline: breast centre* | *0.14* | *0.022* | *0.62* |
+| *Baseline: uniform (chance)* | *0.08* | *0.018* | *0.50* |
+| *Ceiling: ROI mask at 20×12* | *1.00* | *0.431* | *1.00* |
+
+The paper's claims, tested on the paper-design model (7×7 = our map average-pooled to the paper's grid; the paper
+does not define its statistics, so ours are stated in [`summary.md`](results/attention/summary.md)):
+
+| Claim (Sec. VI-C) | Paper | Our measurement | Verdict |
+|---|---|---|---|
+| Attention concentrates on lesions | 4 figures, no measurement | CBAM maximum near the lesion in 24% of images vs 18% for "look at the brightest tissue" (difference +0.055, 95% CI 0.000 to +0.108). Its share of mass on the lesion equals chance (1.9% vs 1.8%) and is slightly *below* the brightness baseline (−0.002, −0.003 to −0.001) | **Not supported** for CBAM. Grad-CAM of the same model does localise: 44% pointing, 5.7× chance energy |
+| Gini, malignant vs benign | 0.68 ± 0.12 vs 0.43 ± 0.15 | 0.088 ± 0.019 vs 0.081 ± 0.014 (7×7); d = 0.40 | **Not reproduced**: our attention is close to uniform (Gini 0 = uniform), the difference is tiny |
+| Entropy, malignant vs benign | 2.31 ± 0.38 vs 3.74 ± 0.51 (p < 0.001) | 3.876 ± 0.008 vs 3.879 ± 0.005 nats (7×7; maximum ln 49 = 3.892) | **Not reproduced**: both at 99.6% of the maximum. The paper's own "benign" value is 96% of the maximum, i.e. nearly uniform too |
+| Peak attention, dense vs non-dense | 0.82 ± 0.09 vs 0.61 ± 0.12; r = 0.61 with density | 0.999 vs 0.999; r = +0.02 (−0.09 to +0.12) | **Not reproduced**: the sigmoid gate saturates at ~1 in every image |
+| 80%-mass area, malignant vs benign | 12.4% vs 28.7% of the image | 74.8% vs 75.4% of the 7×7 map | **Not reproduced** |
+| Fig. 4 shows representative behaviour | 4 hand-picked cases, 2 misclassified | [12 randomly drawn test cases](results/attention/gallery.png) (seed 0, failures included) | Random examples show the gate is high almost everywhere |
+
+**What this shows**
+
+1. **The CBAM attention map is not a lesion detector.** It is a sigmoid gate that is open almost everywhere
+   (mean value 0.85, normalised entropy 0.995; see the CBAM dynamic-range table in `summary.md`). Its maximum lands
+   near the lesion only slightly more often than a map of the brightest tissue, and a density-only model's attention
+   does about as well (+0.045, −0.006 to +0.097). A min–max-scaled heatmap of such a gate can still *look* focused,
+   which is why pictures alone can't support the paper's claim.
+2. **The model does use the lesion, and Grad-CAM shows it.** Grad-CAM of the malignancy output points within one
+   cell of the lesion in 44% of images (66% of malignant ones), puts 5–6 times more of its mass on the lesion than chance, and
+   clearly beats every baseline (+0.26 pointing vs brightest tissue, CI +0.20 to +0.32). The mammography training is
+   what matters: an ImageNet-only network scores 0.15. The density head, as expected, doesn't look at lesions (0.19).
+3. **CBAM doesn't make the explanations better.** Grad-CAM of the model with CBAM and without it localise about
+   the same (+0.023, −0.017 to +0.061).
+4. **Where it fails matches Phase 3.** Lesions smaller than one 32-pixel cell are found far less often (Grad-CAM
+   0.29 vs 0.56 for 1–4-cell lesions). Very large masses are found as well by "the brightest tissue" (0.62) as by
+   any map. Wrongly classified images localise worse (0.37 vs 0.48 correct).
+5. **The paper's attention statistics can't be reproduced**, even qualitatively: no Gini, entropy, peak or area
+   difference of the reported size appears on any grid we tried (20×12, 7×7, breast only).
+
+**Limits.** One seed and one dataset; our backbone (B0) and resolution (640×384 → 20×12 map) differ from the paper
+(B3, 7×7), and the paper describes two attention designs (we built the CBAM one). Only 34 calcification-only images
+remain in the official test split of the Kaggle release (most calcification test cases lack a full-mammogram JPEG), so
+calcification results are uncertain. CBIS-DDSM ROI outlines are loose for calcification clusters. Grad-CAM is itself
+an approximate explanation, and "points at the lesion" is necessary for a faithful explanation, not sufficient.
+Full tables, including subgroups and every paired comparison: [`results/attention/summary.md`](results/attention/summary.md).
+
 ## Roadmap
 
 | Phase | Status | What |
@@ -234,7 +315,7 @@ Paired comparisons on INbreast (bootstrap over patients): multi-task vs density-
 | 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
 | 3 | ✅ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
 | 4 | ✅ | Calibration (temperature and Platt scaling, operating points) and external validation on INbreast |
-| 5 | 🔄 | Do attention maps point at lesions? CBAM attention and Grad-CAM scored against CBIS-DDSM ROI masks, against lesion-blind baselines (code done, results pending) |
+| 5 | ✅ | **Do attention maps point at lesions?** CBAM attention and Grad-CAM scored against CBIS-DDSM ROI masks and lesion-blind baselines |
 | 6 | ⏳ | Final report |
 
 ## Repository layout
@@ -257,7 +338,7 @@ cell, turn on GPU and Internet, then **Run All**:
 - [`notebooks/03_cbis_multitask.ipynb`](notebooks/03_cbis_multitask.ipynb): Phase 3, ~2 h on T4 x2
 - `PYTHONPATH=src python -m mammo.experiments.calibration`: Phase 4a, 1 min on a laptop (uses the Phase 3 predictions)
 - [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb): Phase 4b, ~45 min on T4 x2
-- [`notebooks/05_attention.ipynb`](notebooks/05_attention.ipynb): Phase 5, ~30 min on one T4 (reuses the Phase 4 checkpoints)
+- [`notebooks/05_attention.ipynb`](notebooks/05_attention.ipynb): Phase 5, ~15 min on one T4 (reuses the Phase 4 checkpoints)
 
 Locally: `pip install -r requirements.txt && PYTHONPATH=src pytest -q tests`
 

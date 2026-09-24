@@ -1,0 +1,52 @@
+CBIS-DDSM csv : /kaggle/input/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset/csv
+CBIS-DDSM jpeg: /kaggle/input/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset/jpeg
+official test split: 368 images, 212 patients, 390 abnormalities
+  images + masks 50/368
+  images + masks 100/368
+  images + masks 150/368
+  images + masks 200/368
+  images + masks 250/368
+  images + masks 300/368
+  images + masks 350/368
+  images + masks 368/368
+{
+ "test_images": 368,
+ "test_patients": 212,
+ "abnormalities": 390,
+ "mask_status": {
+  "ok": 376,
+  "no_file_of_image_size": 13,
+  "outside_crop": 1
+ },
+ "usable_masks": 376,
+ "mask_file_labelled_as": {
+  "roi mask images": 333,
+  "": 43
+ },
+ "images_with_usable_mask": 354,
+ "patients_with_usable_mask": 206,
+ "images_by_lesion_type": {
+  "mass": 316,
+  "calc": 34,
+  "both": 4
+ },
+ "images_by_size_bin": {
+  "1-4 cells": 163,
+  "< 1 cell": 144,
+  "> 4 cells": 47
+ },
+ "malignant_images_with_mask": 154,
+ "tiny_lesions_kept_as_peak_pixel": 0,
+ "median_lesion_area_fraction_of_breast": 0.009506036077457071,
+ "median_lesion_eq_diameter_px": {
+  "calc": 46.98567273681693,
+  "mass": 39.45265319510546
+ },
+ "lesion_pixels_outside_breast_region_mean": 0.004052291429022915,
+ "image_size": [
+  640,
+  384
+ ],
+ "map_cell_px": 32
+}
+mask preview (16 random test images, seed 0) -> /kaggle/working/results/attention/mask_preview.png  (1.1 min)

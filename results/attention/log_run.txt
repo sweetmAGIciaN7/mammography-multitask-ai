@@ -1,0 +1,53 @@
+checkpoints: mt_cbam <- /kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_mt_cbam_official.pt, mt_plain <- /kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_mt_plain_official.pt, st_dens <- /kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_st_dens_official.pt, st_path <- /kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_st_path_official.pt
+  mt_cbam: same test images as Phase 4? n=368, AUC 0.746 -> 0.746, max |dP| 0.0341
+  mt_plain: same test images as Phase 4? n=368, AUC 0.772 -> 0.774, max |dP| 0.0403
+  st_path: same test images as Phase 4? n=368, AUC 0.746 -> 0.745, max |dP| 0.0383
+maps: 11 methods (0.6 min)
+CBAM dynamic range: {
+ "cbam:mt_cbam": {
+  "min": 0.0003924295597244054,
+  "max": 0.9999996423721313,
+  "mean": 0.850696325302124,
+  "median_within_image_range": 0.8089077472686768,
+  "median_within_image_sd": 0.16369843482971191,
+  "share_cells_above_0.99": 0.13632246376811594,
+  "share_cells_below_0.01": 0.00038496376811594205
+ },
+ "cbam:st_path": {
+  "min": 7.1453819145972375e-06,
+  "max": 0.9999998807907104,
+  "mean": 0.760289192199707,
+  "median_within_image_range": 0.901214599609375,
+  "median_within_image_sd": 0.1842426061630249,
+  "share_cells_above_0.99": 0.046139039855072464,
+  "share_cells_below_0.01": 0.002332427536231884
+ },
+ "cbam:st_dens": {
+  "min": 0.0037503275088965893,
+  "max": 1.0,
+  "mean": 0.8848955631256104,
+  "median_within_image_range": 0.6103288531303406,
+  "median_within_image_sd": 0.13533976674079895,
+  "share_cells_above_0.99": 0.2617300724637681,
+  "share_cells_below_0.01": 1.1322463768115942e-05
+ },
+ "control:imagenet_cbam": {
+  "min": 0.00017451238818466663,
+  "max": 0.9559969902038574,
+  "mean": 0.23319728672504425,
+  "median_within_image_range": 0.5952659845352173,
+  "median_within_image_sd": 0.1254478543996811,
+  "share_cells_above_0.99": 0.0,
+  "share_cells_below_0.01": 0.0027853260869565217
+ }
+}
+  metrics 50/354 images (1.2 min)
+  metrics 100/354 images (1.8 min)
+  metrics 150/354 images (2.4 min)
+  metrics 200/354 images (3.0 min)
+  metrics 250/354 images (3.6 min)
+  metrics 300/354 images (4.3 min)
+  metrics 350/354 images (4.9 min)
+  metrics 354/354 images (5.0 min)
+gallery: 12 test images drawn at random (seed 0) -> /kaggle/working/results/attention/gallery.png
+done in 5.1 min

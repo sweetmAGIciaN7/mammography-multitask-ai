@@ -1,0 +1,66 @@
+{
+ "checkpoints": {
+  "mt_cbam": "/kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_mt_cbam_official.pt",
+  "mt_plain": "/kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_mt_plain_official.pt",
+  "st_path": "/kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_st_path_official.pt",
+  "st_dens": "/kaggle/input/notebooks/sweetmagician/notebookb86c6df37c/checkpoints/cbis_st_dens_official.pt"
+ },
+ "cross_check": {
+  "mt_cbam": {
+   "n": 368,
+   "max_abs_diff_p_malignant": 0.034117787654647846,
+   "auc_phase4": 0.7461911252461002,
+   "auc_now": 0.7462062698773285
+  },
+  "mt_plain": {
+   "n": 368,
+   "max_abs_diff_p_malignant": 0.040334737367248574,
+   "auc_phase4": 0.7716189610782976,
+   "auc_now": 0.7739512342874451
+  },
+  "st_path": {
+   "n": 368,
+   "max_abs_diff_p_malignant": 0.03834611665557863,
+   "auc_phase4": 0.7457064970467968,
+   "auc_now": 0.7453884597910041
+  }
+ },
+ "cbam_dynamic_range": {
+  "cbam:mt_cbam": {
+   "min": 0.0003924295597244054,
+   "max": 0.9999996423721313,
+   "mean": 0.850696325302124,
+   "median_within_image_range": 0.8089077472686768,
+   "median_within_image_sd": 0.16369843482971191,
+   "share_cells_above_0.99": 0.13632246376811594,
+   "share_cells_below_0.01": 0.00038496376811594205
+  },
+  "cbam:st_path": {
+   "min": 7.1453819145972375e-06,
+   "max": 0.9999998807907104,
+   "mean": 0.760289192199707,
+   "median_within_image_range": 0.901214599609375,
+   "median_within_image_sd": 0.1842426061630249,
+   "share_cells_above_0.99": 0.046139039855072464,
+   "share_cells_below_0.01": 0.002332427536231884
+  },
+  "cbam:st_dens": {
+   "min": 0.0037503275088965893,
+   "max": 1.0,
+   "mean": 0.8848955631256104,
+   "median_within_image_range": 0.6103288531303406,
+   "median_within_image_sd": 0.13533976674079895,
+   "share_cells_above_0.99": 0.2617300724637681,
+   "share_cells_below_0.01": 1.1322463768115942e-05
+  },
+  "control:imagenet_cbam": {
+   "min": 0.00017451238818466663,
+   "max": 0.9559969902038574,
+   "mean": 0.23319728672504425,
+   "median_within_image_range": 0.5952659845352173,
+   "median_within_image_sd": 0.1254478543996811,
+   "share_cells_above_0.99": 0.0,
+   "share_cells_below_0.01": 0.0027853260869565217
+  }
+ }
+}

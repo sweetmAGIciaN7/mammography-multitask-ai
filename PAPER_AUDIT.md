@@ -58,7 +58,7 @@ INbreast has 115 patients and 410 images: typically CC and MLO views of both bre
 | 4.4 | Sec. IV-B vs Fig. 2 / Sec. VI-A | Two different architectures are described. The first is CBAM (channel + 7×7 spatial attention) with Dense 512→256→128 heads. The second is spatial-only attention (Conv 64→32→1) with Dense 256→128→64 heads. Fig. 2 shows EfficientNet-B3 at 224×224 giving 7×7×**960** features, but B3 outputs 1,536 channels (960 is MobileNetV3-Large), and Sec. V-A states B3 was run at 300×300. |
 | 4.5 | Secs. III-A, III-B, V-A | Three different augmentation recipes are given (±15° rotation/±10% scale/±15% brightness; CLAHE + 11 rotations + H/V flips; H-flip + ±10% brightness + 0.9–1.1 contrast). |
 | 4.6 | Fig. 4 | Two of the four "correct attention" examples are misclassified: Case B is benign with P(malignant)=0.82, Case C is malignant with P=0.35. |
-| 4.7 | Sec. VI-C | Attention statistics (Gini, entropy, p-values) are reported without a method, a sample size, or radiologist ground truth. |
+| 4.7 | Sec. VI-C | Attention statistics (Gini, entropy, p-values) are reported without a method, a sample size, or radiologist ground truth. 🧪 Tested in Phase 5 against CBIS-DDSM ROI masks: the CBAM attention localises lesions barely better than a brightest-tissue baseline, and none of the reported statistics is reproduced ([README](README.md#phase-5-do-the-attention-maps-point-at-the-lesion)). |
 | 4.8 | Sec. V-D | CUDA 12.5 is stated for an RTX 5090. Blackwell GPUs require CUDA 12.8 or newer. |
 | 4.9 | Sec. IV-A | *"λ₁/λ₂ ≈ 2.5 ensures the model prioritizes minimizing false negatives"*: a loss weight between two tasks does not set the sensitivity/specificity trade-off. That is the decision threshold's job. |
 
