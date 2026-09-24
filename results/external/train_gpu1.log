@@ -1,0 +1,41 @@
+using cached images cbis_640x384_d304773305a3.npy
+
+=== mt_plain: train on 2434 official-train images, test on 368 official-test images ===
+/kaggle/working/repo/src/mammo/train.py:159: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  sched.step()
+    epoch 1/15  loss 2.5129  (54s)
+    epoch 2/15  loss 2.3180  (30s)
+    epoch 3/15  loss 2.1700  (31s)
+    epoch 4/15  loss 2.0421  (33s)
+    epoch 5/15  loss 2.0055  (33s)
+    epoch 6/15  loss 1.9334  (32s)
+    epoch 7/15  loss 1.8346  (33s)
+    epoch 8/15  loss 1.7741  (32s)
+    epoch 9/15  loss 1.7149  (33s)
+    epoch 10/15  loss 1.6254  (33s)
+    epoch 11/15  loss 1.5865  (32s)
+    epoch 12/15  loss 1.5310  (33s)
+    epoch 13/15  loss 1.4795  (33s)
+    epoch 14/15  loss 1.4410  (33s)
+    epoch 15/15  loss 1.4499  (33s)
+    -> CBIS-DDSM official test: path_auc 0.772, path_accuracy 0.649, dens_accuracy 0.639, dens_qwk 0.736  (8.6 min)
+
+=== st_path: train on 2434 official-train images, test on 368 official-test images ===
+/kaggle/working/repo/src/mammo/train.py:159: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  sched.step()
+    epoch 1/15  loss 1.3942  (33s)
+    epoch 2/15  loss 1.3835  (33s)
+    epoch 3/15  loss 1.3485  (33s)
+    epoch 4/15  loss 1.3046  (33s)
+    epoch 5/15  loss 1.2907  (33s)
+    epoch 6/15  loss 1.2279  (33s)
+    epoch 7/15  loss 1.1806  (33s)
+    epoch 8/15  loss 1.1429  (33s)
+    epoch 9/15  loss 1.0744  (33s)
+    epoch 10/15  loss 1.0672  (33s)
+    epoch 11/15  loss 0.9936  (33s)
+    epoch 12/15  loss 0.9294  (33s)
+    epoch 13/15  loss 0.8991  (33s)
+    epoch 14/15  loss 0.8811  (33s)
+    epoch 15/15  loss 0.8936  (33s)
+    -> CBIS-DDSM official test: path_auc 0.746, path_accuracy 0.649  (8.3 min)

@@ -181,7 +181,50 @@ scale. Malignancy can only be checked against a proxy (BI-RADS 4–6 vs 1–3), 
 for most images.
 
 <!-- RESULTS:EXTERNAL -->
-*Pending:* run [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb) on Kaggle (~45 min).
+![External validation on INbreast](results/external/external_chart.png)
+
+410 INbreast images from 108 patients (409 with a density grade). Each model was trained once on the official
+CBIS-DDSM training patients, about 8 minutes per model on a Kaggle T4. 95% CIs come from a bootstrap over INbreast
+patients.
+
+| Density | CBIS-DDSM official test QWK | **INbreast QWK** (95% CI) | INbreast accuracy | Within ±1 grade |
+|---|---:|---:|---:|---:|
+| **Multi-task + CBAM (paper design)** | 0.711 | **0.660** (0.550–0.743) | 0.538 | 0.934 |
+| Multi-task, no attention | 0.736 | 0.655 (0.545–0.744) | 0.560 | 0.941 |
+| Density only + CBAM | 0.721 | 0.601 (0.489–0.694) | 0.545 | 0.963 |
+| *Always predict the most common grade* | | *0.000* | *0.357* | |
+
+| Malignancy proxy (exploratory) | CBIS-DDSM official AUC | INbreast AUC, BI-RADS 4–6 vs 1–3 (95% CI) | BI-RADS 5–6 vs 1–2 |
+|---|---:|---:|---:|
+| **Multi-task + CBAM (paper design)** | 0.746 | **0.822** (0.761–0.877) | 0.907 |
+| Multi-task, no attention | 0.772 | 0.796 (0.733–0.850) | 0.854 |
+| Malignancy only + CBAM | 0.746 | 0.788 (0.722–0.847) | 0.880 |
+
+Paired comparisons on INbreast (bootstrap over patients): multi-task vs density-only, QWK +0.059 (95% CI −0.019 to
++0.146); CBAM vs no attention, QWK +0.004 (−0.038 to +0.048); multi-task vs malignancy-only, proxy AUC +0.034
+(−0.012 to +0.086). None of these is conclusive. Full output: [`results/external/summary.md`](results/external/summary.md).
+
+**What this shows**
+
+1. **Density grading survives the move to a different technology.** Trained only on 1990s scanned film, the model
+   grades modern digital mammograms with QWK 0.66 against 0.71 on its own test set: a small drop, well above chance.
+   93% of its INbreast predictions are within one grade of the radiologist's. Most errors are between neighbouring
+   grades, and it over-calls the densest grade (61 predicted D vs 28 true D).
+2. **Multi-task training may help transfer, but the evidence is weak.** On CBIS-DDSM the density-only model was
+   as good as the multi-task one. On INbreast the multi-task models hold up slightly better (QWK 0.66 vs 0.60), but
+   the confidence interval includes zero. It's a hint worth a second seed, not a finding.
+3. **The malignancy score ranks suspicious images above normal ones on INbreast.** The mean predicted probability rises
+   steadily with the radiologist's BI-RADS category: 0.25 (BI-RADS 1) → 0.28 (2) → 0.28 (3) → 0.43 (4) → 0.75 (5)
+   → 0.79 (6). The AUC (0.82) is *higher* than on CBIS-DDSM only because the task is easier: INbreast includes
+   normal mammograms, which the model can tell apart from suspicious ones more easily than it can tell benign from
+   malignant findings. BI-RADS is a radiologist's suspicion, not a biopsy result, so this is a sanity check, not an
+   accuracy claim.
+4. **Probabilities don't survive a change of domain, even when rankings do.** On the same normal INbreast images the
+   paper design predicts 25% malignant and the no-attention model 54%, with similar AUCs. The CBIS-DDSM temperature
+   even makes density calibration slightly worse on INbreast (ECE 0.107 → 0.129). This matches Phase 4a: a
+   calibration only holds for the data and model it was fitted on.
+5. **The pipeline is reproducible.** Retraining the paper-design model with the same seed reproduced the Phase 3
+   official-split numbers to three decimals (AUC 0.746, density QWK 0.711).
 
 ## Roadmap
 
@@ -190,7 +233,7 @@ for most images.
 | 1 | ✅ | Clean, tested codebase (`src/mammo`), v1 archived |
 | 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
 | 3 | ✅ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
-| 4 | 🟡 | Calibration ✅ (temperature and Platt scaling, operating points); external validation on INbreast ⏳ |
+| 4 | ✅ | Calibration (temperature and Platt scaling, operating points) and external validation on INbreast |
 | 5 | ⏳ | Do attention maps point at lesions? Scored against radiologist ROI outlines |
 | 6 | ⏳ | Final report |
 

@@ -1,0 +1,15 @@
+{
+ "n_train": 2434,
+ "n_test": 368,
+ "test_patients": 212,
+ "patients_in_both": 0,
+ "path_auc": 0.7457064970467968,
+ "path_accuracy": 0.6494565217391305,
+ "path_sensitivity": 0.7548387096774194,
+ "path_specificity": 0.5727699530516432,
+ "path_brier": 0.24160900447027908,
+ "path_ece": 0.204470519760988,
+ "path_n": 368,
+ "path_balanced_accuracy": 0.6638043313645313,
+ "path_majority_accuracy": 0.5788043478260869
+}

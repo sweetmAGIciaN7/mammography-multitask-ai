@@ -121,7 +121,7 @@ def cached_inbreast(paths, height: int, width: int, cache_dir: str | Path, worke
 def describe_inbreast(df: pd.DataFrame) -> str:
     dens = df.loc[df["density"] >= 0, "density"].value_counts().sort_index()
     return "\n".join([
-        f"images          : {len(df)}  (CC {int((df['view'] == 'CC').sum())}, MLO {int((df['view'] == 'MLO').sum())})",
+        f"images          : {len(df)}  (views: {df['view'].value_counts().to_dict()}; INbreast calls MLO 'ML')",
         f"patients        : {df['patient'].nunique()}",
         f"density known   : {int((df['density'] >= 0).sum())}  " + str({f'ACR {k + 1}': int(v) for k, v in dens.items()}),
         f"BI-RADS         : " + str(df["birads_num"].value_counts(dropna=False).sort_index().to_dict()),

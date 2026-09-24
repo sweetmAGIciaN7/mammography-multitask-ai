@@ -1,0 +1,11 @@
+{
+ "n_train": 2434,
+ "n_test": 368,
+ "test_patients": 212,
+ "patients_in_both": 0,
+ "dens_accuracy": 0.6739130434782609,
+ "dens_macro_f1": 0.6441563845240996,
+ "dens_qwk": 0.7205002516168715,
+ "dens_n": 368,
+ "dens_majority_accuracy": 0.453804347826087
+}

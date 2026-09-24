@@ -1,0 +1,5 @@
+using cached images inbreast_640x384_533a2c6ad770.npy
+  mt_cbam: predicted 410 INbreast images; density acc 0.538 QWK 0.660
+  mt_plain: predicted 410 INbreast images; density acc 0.560 QWK 0.655
+  st_path: predicted 410 INbreast images
+  st_dens: predicted 410 INbreast images; density acc 0.545 QWK 0.601

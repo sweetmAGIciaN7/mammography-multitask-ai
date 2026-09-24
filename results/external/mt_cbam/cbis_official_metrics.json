@@ -1,0 +1,20 @@
+{
+ "n_train": 2434,
+ "n_test": 368,
+ "test_patients": 212,
+ "patients_in_both": 0,
+ "path_auc": 0.7461911252461002,
+ "path_accuracy": 0.6222826086956522,
+ "path_sensitivity": 0.7612903225806451,
+ "path_specificity": 0.5211267605633803,
+ "path_brier": 0.24564374577754175,
+ "path_ece": 0.20637980475515613,
+ "path_n": 368,
+ "path_balanced_accuracy": 0.6412085415720127,
+ "path_majority_accuracy": 0.5788043478260869,
+ "dens_accuracy": 0.6059782608695652,
+ "dens_macro_f1": 0.5733806999034636,
+ "dens_qwk": 0.7106060606060607,
+ "dens_n": 368,
+ "dens_majority_accuracy": 0.453804347826087
+}

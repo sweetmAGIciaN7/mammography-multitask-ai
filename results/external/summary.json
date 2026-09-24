@@ -1,0 +1,704 @@
+{
+ "results": {
+  "mt_cbam": {
+   "label": "Multi-task + CBAM (paper design)",
+   "inbreast_density": {
+    "n_images": 409,
+    "n_patients": 108,
+    "accuracy": 0.5378973105134475,
+    "accuracy_ci95": [
+     0.46427712912087915,
+     0.615797228987168
+    ],
+    "qwk": 0.6595533468159621,
+    "qwk_ci95": [
+     0.550253215223043,
+     0.7426980273232261
+    ],
+    "macro_f1": 0.494450784436492,
+    "within_one_grade": 0.9339853300733496,
+    "mean_predicted_grade": 1.1295843520782396,
+    "mean_true_grade": 1.0464547677261613,
+    "true_counts": [
+     136,
+     146,
+     99,
+     28
+    ],
+    "predicted_counts": [
+     138,
+     141,
+     69,
+     61
+    ],
+    "confusion": [
+     [
+      100,
+      35,
+      1,
+      0
+     ],
+     [
+      29,
+      73,
+      28,
+      16
+     ],
+     [
+      9,
+      32,
+      30,
+      28
+     ],
+     [
+      0,
+      1,
+      10,
+      17
+     ]
+    ],
+    "majority_baseline_accuracy": 0.3569682151589242,
+    "train_majority_baseline_accuracy": 0.3569682151589242,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 1.0340213862058691,
+      "brier": 0.5832244691119014,
+      "ece": 0.10666244356152431,
+      "mean_confidence": 0.62584338156031,
+      "accuracy": 0.5378973105134475
+     },
+     "cbis_temperature": {
+      "T": 0.8840864725478395,
+      "nll": 1.0601948425385916,
+      "brier": 0.5922816031685423,
+      "ece": 0.12889689907388474,
+      "mean_confidence": 0.6525962051040385,
+      "accuracy": 0.5378973105134475
+     },
+     "oracle_temperature_fitted_on_inbreast": {
+      "T": 1.357364717854945,
+      "nll": 1.0097466641670578,
+      "brier": 0.570979090936336,
+      "ece": 0.08305092901344605,
+      "mean_confidence": 0.5585281659023779,
+      "accuracy": 0.5378973105134475
+     }
+    }
+   },
+   "cbis_official_density": {
+    "n_images": 368,
+    "n_patients": 212,
+    "accuracy": 0.6059782608695652,
+    "accuracy_ci95": [
+     0.5491763098682096,
+     0.6622148602068172
+    ],
+    "qwk": 0.7106060606060607,
+    "qwk_ci95": [
+     0.6305450572676438,
+     0.7729990230718657
+    ],
+    "macro_f1": 0.5733806999034636,
+    "within_one_grade": 0.967391304347826,
+    "mean_predicted_grade": 1.5,
+    "mean_true_grade": 1.4103260869565217,
+    "true_counts": [
+     47,
+     167,
+     110,
+     44
+    ],
+    "predicted_counts": [
+     59,
+     154,
+     67,
+     88
+    ],
+    "confusion": [
+     [
+      31,
+      14,
+      0,
+      2
+     ],
+     [
+      28,
+      116,
+      17,
+      6
+     ],
+     [
+      0,
+      20,
+      43,
+      47
+     ],
+     [
+      0,
+      4,
+      7,
+      33
+     ]
+    ],
+    "majority_baseline_accuracy": 0.453804347826087,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 0.8509026559986215,
+      "brier": 0.5124144376188263,
+      "ece": 0.08728468945535843,
+      "mean_confidence": 0.6371154700003419,
+      "accuracy": 0.6059782608695652
+     }
+    }
+   },
+   "inbreast_malignancy_proxy": {
+    "definition": "BI-RADS 4-6 (suspicious) vs 1-3",
+    "n_images": 410,
+    "n_positive": 100,
+    "auc": 0.8216290322580646,
+    "auc_ci95": [
+     0.7607082560417784,
+     0.877445120798043
+    ],
+    "mean_p_malignant_birads_1_3": 0.2708840649935484,
+    "mean_p_malignant_birads_4_6": 0.61401002954,
+    "auc_birads_5_6_vs_1_2": 0.9069930924873159,
+    "auc_birads_5_6_vs_1_2_ci95": [
+     0.8381729166271202,
+     0.9624303693701091
+    ],
+    "n_birads_5_6_vs_1_2": 344,
+    "by_birads": {
+     "1": {
+      "n": 67,
+      "mean_p_malignant": 0.25441904552238803
+     },
+     "2": {
+      "n": 220,
+      "mean_p_malignant": 0.27459680952272725
+     },
+     "3": {
+      "n": 23,
+      "mean_p_malignant": 0.2833341740434782
+     },
+     "4": {
+      "n": 43,
+      "mean_p_malignant": 0.4252106788372094
+     },
+     "5": {
+      "n": 49,
+      "mean_p_malignant": 0.7509612375510203
+     },
+     "6": {
+      "n": 8,
+      "mean_p_malignant": 0.7899803905
+     }
+    },
+    "calibration_note": "not a calibration test: BI-RADS is not pathology"
+   },
+   "cbis_official_malignancy": {
+    "auc": 0.7461911252461002,
+    "auc_ci95": [
+     0.681064570641061,
+     0.8046719296153675
+    ]
+   }
+  },
+  "mt_plain": {
+   "label": "Multi-task, no attention",
+   "inbreast_density": {
+    "n_images": 409,
+    "n_patients": 108,
+    "accuracy": 0.5599022004889975,
+    "accuracy_ci95": [
+     0.48019541122730536,
+     0.6460612942737571
+    ],
+    "qwk": 0.6552102498912789,
+    "qwk_ci95": [
+     0.5445862831509789,
+     0.7438401259314026
+    ],
+    "macro_f1": 0.4913713255668138,
+    "within_one_grade": 0.941320293398533,
+    "mean_predicted_grade": 0.9242053789731052,
+    "mean_true_grade": 1.0464547677261613,
+    "true_counts": [
+     136,
+     146,
+     99,
+     28
+    ],
+    "predicted_counts": [
+     171,
+     133,
+     70,
+     35
+    ],
+    "confusion": [
+     [
+      116,
+      19,
+      1,
+      0
+     ],
+     [
+      45,
+      70,
+      23,
+      8
+     ],
+     [
+      10,
+      39,
+      33,
+      17
+     ],
+     [
+      0,
+      5,
+      13,
+      10
+     ]
+    ],
+    "majority_baseline_accuracy": 0.3569682151589242,
+    "train_majority_baseline_accuracy": 0.3569682151589242,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 1.005307049699084,
+      "brier": 0.5595717994496215,
+      "ece": 0.09699096399758608,
+      "mean_confidence": 0.6543863471064386,
+      "accuracy": 0.5599022004889975
+     },
+     "cbis_temperature": {
+      "T": 0.9358069078566874,
+      "nll": 1.01897501357982,
+      "brier": 0.5641900285242946,
+      "ece": 0.11259432908323384,
+      "mean_confidence": 0.670068867820069,
+      "accuracy": 0.5599022004889975
+     },
+     "oracle_temperature_fitted_on_inbreast": {
+      "T": 1.3616549070865764,
+      "nll": 0.9789860491448633,
+      "brier": 0.5487845438489685,
+      "ece": 0.03939010805543416,
+      "mean_confidence": 0.5806145520838053,
+      "accuracy": 0.5599022004889975
+     }
+    }
+   },
+   "cbis_official_density": {
+    "n_images": 368,
+    "n_patients": 212,
+    "accuracy": 0.6385869565217391,
+    "accuracy_ci95": [
+     0.582167564728983,
+     0.6956521739130435
+    ],
+    "qwk": 0.7361452197358704,
+    "qwk_ci95": [
+     0.657428513913562,
+     0.7958714589649435
+    ],
+    "macro_f1": 0.6022066064299869,
+    "within_one_grade": 0.9782608695652174,
+    "mean_predicted_grade": 1.483695652173913,
+    "mean_true_grade": 1.4103260869565217,
+    "true_counts": [
+     47,
+     167,
+     110,
+     44
+    ],
+    "predicted_counts": [
+     54,
+     162,
+     72,
+     80
+    ],
+    "confusion": [
+     [
+      29,
+      16,
+      0,
+      2
+     ],
+     [
+      25,
+      123,
+      16,
+      3
+     ],
+     [
+      0,
+      20,
+      49,
+      41
+     ],
+     [
+      0,
+      3,
+      7,
+      34
+     ]
+    ],
+    "majority_baseline_accuracy": 0.453804347826087,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 0.7955790697326377,
+      "brier": 0.4746129712661887,
+      "ece": 0.07408425226895712,
+      "mean_confidence": 0.6340530351606684,
+      "accuracy": 0.6385869565217391
+     }
+    }
+   },
+   "inbreast_malignancy_proxy": {
+    "definition": "BI-RADS 4-6 (suspicious) vs 1-3",
+    "n_images": 410,
+    "n_positive": 100,
+    "auc": 0.7958709677419354,
+    "auc_ci95": [
+     0.7329544037723573,
+     0.8499677593188044
+    ],
+    "mean_p_malignant_birads_1_3": 0.5443664578161291,
+    "mean_p_malignant_birads_4_6": 0.7958966907,
+    "auc_birads_5_6_vs_1_2": 0.8543920777553641,
+    "auc_birads_5_6_vs_1_2_ci95": [
+     0.7828140490015579,
+     0.915183262529062
+    ],
+    "n_birads_5_6_vs_1_2": 344,
+    "by_birads": {
+     "1": {
+      "n": 67,
+      "mean_p_malignant": 0.5405442568656718
+     },
+     "2": {
+      "n": 220,
+      "mean_p_malignant": 0.5523217582863637
+     },
+     "3": {
+      "n": 23,
+      "mean_p_malignant": 0.4794065169565217
+     },
+     "4": {
+      "n": 43,
+      "mean_p_malignant": 0.7215541413953489
+     },
+     "5": {
+      "n": 49,
+      "mean_p_malignant": 0.8477304359183673
+     },
+     "6": {
+      "n": 8,
+      "mean_p_malignant": 0.87800620375
+     }
+    },
+    "calibration_note": "not a calibration test: BI-RADS is not pathology"
+   },
+   "cbis_official_malignancy": {
+    "auc": 0.7716189610782976,
+    "auc_ci95": [
+     0.7085329650080707,
+     0.8263418038650571
+    ]
+   }
+  },
+  "st_path": {
+   "label": "Malignancy only + CBAM",
+   "inbreast_malignancy_proxy": {
+    "definition": "BI-RADS 4-6 (suspicious) vs 1-3",
+    "n_images": 410,
+    "n_positive": 100,
+    "auc": 0.7879516129032258,
+    "auc_ci95": [
+     0.7223777636865012,
+     0.8466139813203362
+    ],
+    "mean_p_malignant_birads_1_3": 0.4902491614719355,
+    "mean_p_malignant_birads_4_6": 0.76549740785,
+    "auc_birads_5_6_vs_1_2": 0.8798215049819672,
+    "auc_birads_5_6_vs_1_2_ci95": [
+     0.809434671440498,
+     0.9380385045044706
+    ],
+    "n_birads_5_6_vs_1_2": 344,
+    "by_birads": {
+     "1": {
+      "n": 67,
+      "mean_p_malignant": 0.4856950908208956
+     },
+     "2": {
+      "n": 220,
+      "mean_p_malignant": 0.4974047581877272
+     },
+     "3": {
+      "n": 23,
+      "mean_p_malignant": 0.43507052913043476
+     },
+     "4": {
+      "n": 43,
+      "mean_p_malignant": 0.640511371744186
+     },
+     "5": {
+      "n": 49,
+      "mean_p_malignant": 0.8556005910204082
+     },
+     "6": {
+      "n": 8,
+      "mean_p_malignant": 0.885415355
+     }
+    },
+    "calibration_note": "not a calibration test: BI-RADS is not pathology"
+   },
+   "cbis_official_malignancy": {
+    "auc": 0.7457064970467968,
+    "auc_ci95": [
+     0.68175283120527,
+     0.8021063818690022
+    ]
+   }
+  },
+  "st_dens": {
+   "label": "Density only + CBAM",
+   "inbreast_density": {
+    "n_images": 409,
+    "n_patients": 108,
+    "accuracy": 0.5452322738386308,
+    "accuracy_ci95": [
+     0.47159971183998645,
+     0.6165913350237018
+    ],
+    "qwk": 0.6009129172834096,
+    "qwk_ci95": [
+     0.4887934855597679,
+     0.6938693370886385
+    ],
+    "macro_f1": 0.4949616909177483,
+    "within_one_grade": 0.9633251833740831,
+    "mean_predicted_grade": 1.017114914425428,
+    "mean_true_grade": 1.0464547677261613,
+    "true_counts": [
+     136,
+     146,
+     99,
+     28
+    ],
+    "predicted_counts": [
+     105,
+     206,
+     84,
+     14
+    ],
+    "confusion": [
+     [
+      80,
+      56,
+      0,
+      0
+     ],
+     [
+      18,
+      96,
+      31,
+      1
+     ],
+     [
+      6,
+      47,
+      40,
+      6
+     ],
+     [
+      1,
+      7,
+      13,
+      7
+     ]
+    ],
+    "majority_baseline_accuracy": 0.3569682151589242,
+    "train_majority_baseline_accuracy": 0.3569682151589242,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 1.19112200010676,
+      "brier": 0.6509821804176832,
+      "ece": 0.2076546442390771,
+      "mean_confidence": 0.7475174596295364,
+      "accuracy": 0.5452322738386308
+     },
+     "cbis_temperature": {
+      "T": 1.1048976892870646,
+      "nll": 1.1412501632754597,
+      "brier": 0.6352458930876392,
+      "ece": 0.18383949275099334,
+      "mean_confidence": 0.7228488227733489,
+      "accuracy": 0.5452322738386308
+     },
+     "oracle_temperature_fitted_on_inbreast": {
+      "T": 1.91851485894972,
+      "nll": 1.0330000874199576,
+      "brier": 0.583066659654314,
+      "ece": 0.04357317756570822,
+      "mean_confidence": 0.5726074278545528,
+      "accuracy": 0.5452322738386308
+     }
+    }
+   },
+   "cbis_official_density": {
+    "n_images": 368,
+    "n_patients": 212,
+    "accuracy": 0.6739130434782609,
+    "accuracy_ci95": [
+     0.6216216216216216,
+     0.7265598342676091
+    ],
+    "qwk": 0.7205002516168715,
+    "qwk_ci95": [
+     0.633193378179705,
+     0.7928395309736994
+    ],
+    "macro_f1": 0.6441563845240996,
+    "within_one_grade": 0.970108695652174,
+    "mean_predicted_grade": 1.3967391304347827,
+    "mean_true_grade": 1.4103260869565217,
+    "true_counts": [
+     47,
+     167,
+     110,
+     44
+    ],
+    "predicted_counts": [
+     52,
+     178,
+     78,
+     60
+    ],
+    "confusion": [
+     [
+      31,
+      14,
+      0,
+      2
+     ],
+     [
+      21,
+      129,
+      13,
+      4
+     ],
+     [
+      0,
+      30,
+      57,
+      23
+     ],
+     [
+      0,
+      5,
+      8,
+      31
+     ]
+    ],
+    "majority_baseline_accuracy": 0.453804347826087,
+    "calibration": {
+     "uncalibrated": {
+      "nll": 0.8002649454367244,
+      "brier": 0.47194884164361384,
+      "ece": 0.10421538724678686,
+      "mean_confidence": 0.7499325008079611,
+      "accuracy": 0.6739130434782609
+     }
+    }
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "question": "Does multi-task training help density transfer?",
+   "a": "mt_cbam",
+   "b": "st_dens",
+   "metric": "QWK",
+   "diff": 0.05864042953255255,
+   "ci95": [
+    -0.01850919318030598,
+    0.14620125946416013
+   ],
+   "p_not_better": 0.0755,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does CBAM help density transfer?",
+   "a": "mt_cbam",
+   "b": "mt_plain",
+   "metric": "QWK",
+   "diff": 0.004343096924683265,
+   "ci95": [
+    -0.038037713933459706,
+    0.048123188441051755
+   ],
+   "p_not_better": 0.4285,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does multi-task training help the malignancy proxy?",
+   "a": "mt_cbam",
+   "b": "st_path",
+   "metric": "proxy AUC",
+   "diff": 0.03367741935483881,
+   "ci95": [
+    -0.012429687499999967,
+    0.08571073841983153
+   ],
+   "p_not_better": 0.08,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does CBAM help the malignancy proxy?",
+   "a": "mt_cbam",
+   "b": "mt_plain",
+   "metric": "proxy AUC",
+   "diff": 0.025758064516129164,
+   "ci95": [
+    -0.014985489547151828,
+    0.06912309419503951
+   ],
+   "p_not_better": 0.1065,
+   "n_boot": 2000
+  }
+ ],
+ "official_reproduced": {
+  "path_auc": {
+   "phase3": 0.7461911252461002,
+   "phase4": 0.7461911252461002
+  },
+  "path_accuracy": {
+   "phase3": 0.6222826086956522,
+   "phase4": 0.6222826086956522
+  },
+  "dens_accuracy": {
+   "phase3": 0.6059782608695652,
+   "phase4": 0.6059782608695652
+  },
+  "dens_qwk": {
+   "phase3": 0.7106060606060607,
+   "phase4": 0.7106060606060607
+  }
+ },
+ "inbreast": {
+  "images": 410,
+  "patients": 108,
+  "density_known": 409,
+  "density_counts": [
+   136,
+   146,
+   99,
+   28
+  ],
+  "suspicious": 100,
+  "not_suspicious": 310
+ }
+}
