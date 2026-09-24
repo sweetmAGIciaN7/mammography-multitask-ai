@@ -414,7 +414,12 @@ def correlation_ci(x, y, groups, n: int = 2000, seed: int = 0) -> dict:
         if np.std(x[pick]) == 0 or np.std(y[pick]) == 0:
             continue
         bp.append(pearsonr(x[pick], y[pick])[0]); bs.append(spearmanr(x[pick], y[pick])[0])
-    return {"pearson": float(pearsonr(x, y)[0]), "pearson_ci95": [float(v) for v in np.percentile(bp, [2.5, 97.5])],
-            "pearson_p": float(pearsonr(x, y)[1]),
-            "spearman": float(spearmanr(x, y)[0]), "spearman_ci95": [float(v) for v in np.percentile(bs, [2.5, 97.5])],
+    nan2 = [float("nan"), float("nan")]
+    if len(x) < 3 or np.std(x) == 0 or np.std(y) == 0:      # e.g. a constant map: correlation undefined
+        return {"pearson": float("nan"), "pearson_ci95": nan2, "pearson_p": float("nan"), "spearman": float("nan"),
+                "spearman_ci95": nan2, "n": int(len(x))}
+    pr, sr = pearsonr(x, y), spearmanr(x, y)
+    return {"pearson": float(pr[0]), "pearson_ci95": [float(v) for v in np.percentile(bp, [2.5, 97.5])] if bp else nan2,
+            "pearson_p": float(pr[1]),
+            "spearman": float(sr[0]), "spearman_ci95": [float(v) for v in np.percentile(bs, [2.5, 97.5])] if bs else nan2,
             "n": int(len(x))}

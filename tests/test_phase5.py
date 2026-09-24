@@ -228,7 +228,7 @@ def test_scoring_and_summary_without_torch(fake_cbis, tmp_path):
     perfect = np.stack([pool_cells(les, 5, 3) > 0 for les in d["lesion"]]).astype(float)
     maps = {"cbam:mt_cbam": 0.3 + 0.5 * perfect, "gradcam_mal:mt_cbam": perfect, "gradcam_mal:mt_plain": rng.random((N, 5, 3)),
             "gradcam_dens:st_dens": rng.random((N, 5, 3)), "cbam:st_dens": rng.random((N, 5, 3)),
-            "control:untrained_cbam": rng.random((N, 5, 3)), "control:untrained_gradcam": rng.random((N, 5, 3))}
+            "control:imagenet_cbam": rng.random((N, 5, 3)), "control:imagenet_gradcam": rng.random((N, 5, 3))}
     preds = pd.DataFrame({"image_id": test["image_id"], "p_malignant_mt_cbam": 0.6, "p_malignant_mt_plain": 0.4,
                           "pred_density_st_dens": 1})
     args = argparse.Namespace(out=str(out), seed=0, n_random=2, gallery_n=3)
@@ -293,6 +293,14 @@ def test_run_end_to_end_untrained(fake_cbis, tmp_path):
     assert A.main(["run", *common]) == 0
     assert A.main(["summarise", *common]) == 0
     met = pd.read_csv(out / "metrics.csv")
-    assert {"cbam:mt_cbam", "gradcam_mal:mt_plain", "gradcam_dens:st_dens", "base:random", "control:untrained_gradcam"} \
+    assert {"cbam:mt_cbam", "gradcam_mal:mt_plain", "gradcam_dens:st_dens", "base:random", "control:imagenet_gradcam"} \
         <= set(met["method"])
     assert (out / "gallery.png").exists() and (out / "localisation_chart.png").exists()
+
+
+def test_correlation_handles_constant_maps():
+    from mammo.localization import correlation_ci
+    r = correlation_ci(np.full(20, 0.5), np.arange(20) % 4, np.arange(20) // 2, n=50)
+    assert np.isnan(r["pearson"]) and np.isnan(r["pearson_ci95"][0])
+    r = correlation_ci(np.arange(20.0), np.arange(20) % 4 + np.arange(20) / 10, np.arange(20) // 2, n=50)
+    assert r["pearson"] > 0.5 and r["pearson_ci95"][0] <= r["pearson"] <= r["pearson_ci95"][1]

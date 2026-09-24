@@ -67,7 +67,7 @@ def method_label(m: str) -> str:
     if kind == "ref":
         return "Ceiling: ROI mask at map resolution"
     if kind == "control":
-        return {"untrained_cbam": "Control: CBAM, untrained net", "untrained_gradcam": "Control: Grad-CAM, untrained net"}[who]
+        return {"imagenet_cbam": "Control: CBAM, ImageNet-only net", "imagenet_gradcam": "Control: Grad-CAM, ImageNet-only net"}[who]
     name = {"cbam": "CBAM attention", "gradcam_mal": "Grad-CAM malignancy", "gradcam_dens": "Grad-CAM density"}[kind]
     return f"{name} ({who})"
 
@@ -235,12 +235,14 @@ def _load_model(f, device):
 
 
 def _untrained(variant, device, seed=0):
+    """Never trained on mammograms: ImageNet-pretrained backbone, randomly initialised CBAM and heads. (A fully random
+    EfficientNet is useless as a control: in eval mode its activations collapse to ~0 and every map is constant.)"""
     import torch
     from mammo.experiments.cbis import CONFIGS
     from mammo.model import MultiTaskNet
     torch.manual_seed(seed)
     spec = CONFIGS[variant]
-    return MultiTaskNet("efficientnet_b0", pretrained=False, attention=spec["attention"], tasks=spec["tasks"]).to(device).eval()
+    return MultiTaskNet("efficientnet_b0", pretrained=True, attention=spec["attention"], tasks=spec["tasks"]).to(device).eval()
 
 
 def _maps_for(model, images, device, batch=16):
@@ -296,8 +298,9 @@ def cmd_run(args) -> int:
             maps[f"gradcam_dens:{v}"] = m["gradcam_dens"]
             preds[f"pred_density_{v}"] = m["p_density"].argmax(1)
         ph4 = Path(args.external_results) / v / "cbis_official_predictions.csv"
-        if ph4.exists() and f"p_malignant_{v}" in preds:
-            o = pd.read_csv(ph4, dtype={"image_id": str}).merge(preds[["image_id", f"p_malignant_{v}"]], on="image_id")
+        o = pd.read_csv(ph4, dtype={"image_id": str}).merge(preds[["image_id", f"p_malignant_{v}"]], on="image_id") \
+            if ph4.exists() and f"p_malignant_{v}" in preds else pd.DataFrame()
+        if len(o) and o["y"].nunique() == 2:
             info["cross_check"][v] = {
                 "n": int(len(o)), "max_abs_diff_p_malignant": float((o["p_malignant"] - o[f"p_malignant_{v}"]).abs().max()),
                 "auc_phase4": auc_fn(o["y"], o["p_malignant"]), "auc_now": auc_fn(o["y"], o[f"p_malignant_{v}"])}
@@ -308,7 +311,7 @@ def cmd_run(args) -> int:
             torch.cuda.empty_cache()
     ctrl = _untrained("mt_cbam", device, seed=0)
     m = _maps_for(ctrl, images, device)
-    maps["control:untrained_cbam"], maps["control:untrained_gradcam"] = m["cbam"], m["gradcam_mal"]
+    maps["control:imagenet_cbam"], maps["control:imagenet_gradcam"] = m["cbam"], m["gradcam_mal"]
     del ctrl
     log(f"maps: {len(maps)} methods ({(time.time() - t0) / 60:.1f} min)")
     return evaluate_maps(maps, preds, info, test, images, lesion, breast, args, log, t0)
@@ -325,7 +328,7 @@ def evaluate_maps(maps: dict, preds: pd.DataFrame, info: dict, test: pd.DataFram
     # CBAM is a sigmoid gate: is it flat, saturated, or does it actually vary?
     rng_info = {}
     for k, a in maps.items():
-        if not k.startswith(("cbam", "control:untrained_cbam")):
+        if not k.startswith(("cbam", "control:imagenet_cbam")):
             continue
         per = a.reshape(len(a), -1)
         rng_info[k] = {"min": float(per.min()), "max": float(per.max()), "mean": float(per.mean()),
@@ -434,7 +437,7 @@ def summarise_frame(met: pd.DataFrame, test: pd.DataFrame, nboot: int, run_info:
 
     pairs = []
     model_methods = [m for m in methods if not m.startswith(("base", "control", "ref"))]
-    for m in model_methods + ["control:untrained_gradcam", "control:untrained_cbam"]:
+    for m in model_methods + ["control:imagenet_gradcam", "control:imagenet_cbam"]:
         for b in ("base:uniform", "base:brightness", "base:centre", "base:random"):
             pairs.append((m, b))
     extra = [("cbam:mt_cbam", "gradcam_mal:mt_cbam", "Attention map vs Grad-CAM of the same model"),
@@ -442,8 +445,8 @@ def summarise_frame(met: pd.DataFrame, test: pd.DataFrame, nboot: int, run_info:
              ("cbam:st_path", "cbam:st_dens", "Malignancy-only vs density-only attention"),
              ("gradcam_mal:mt_cbam", "gradcam_mal:mt_plain", "Does CBAM make Grad-CAM more lesion-focused?"),
              ("gradcam_mal:mt_cbam", "gradcam_dens:mt_cbam", "Malignancy head vs density head, same model"),
-             ("gradcam_mal:mt_cbam", "control:untrained_gradcam", "Trained vs untrained network (Grad-CAM)"),
-             ("cbam:mt_cbam", "control:untrained_cbam", "Trained vs untrained network (CBAM)")]
+             ("gradcam_mal:mt_cbam", "control:imagenet_gradcam", "Mammography-trained vs ImageNet-only network (Grad-CAM)"),
+             ("cbam:mt_cbam", "control:imagenet_cbam", "Mammography-trained vs ImageNet-only network (CBAM)")]
     comps = []
     for a, b, *q in [(p[0], p[1]) for p in pairs] + extra:
         if a not in methods or b not in methods:
@@ -459,7 +462,7 @@ def summarise_frame(met: pd.DataFrame, test: pd.DataFrame, nboot: int, run_info:
 
     # the paper's attention statistics
     paper = {}
-    for m in [x for x in methods if x.startswith(("cbam", "gradcam_mal:mt_cbam", "control:untrained_cbam"))]:
+    for m in [x for x in methods if x.startswith(("cbam", "gradcam_mal:mt_cbam", "control:imagenet_cbam"))]:
         d = frame(m)
         mal, ben = (d["pathology"] == 1).to_numpy(), (d["pathology"] == 0).to_numpy()
         dense, nondense = d["density"].isin([2, 3]).to_numpy(), d["density"].isin([0, 1]).to_numpy()
