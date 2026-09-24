@@ -128,6 +128,61 @@ leaks too unless it is re-checked at the patient level.
 5. **Calcifications are the hard case.** AUC is 0.83 on images with masses but 0.72 on images with only
    calcifications. Calcifications are a few pixels across and largely lost at 640×384.
 
+## Phase 4: can the probabilities be trusted, and does the model travel?
+
+A model can rank cases well and still give misleading probabilities. If it says "80% malignant", about 80% of those
+cases should actually be malignant. Phase 4 checks this (**calibration**) and then tests the model on a dataset from
+a different country and imaging technology (**external validation**).
+
+### 4a. Calibration (CBIS-DDSM, no retraining)
+
+This part uses the out-of-fold predictions saved in Phase 3, so it needs no GPU
+(`PYTHONPATH=src python -m mammo.experiments.calibration`). Every calibration is **cross-fitted**: fold *k* is
+calibrated with parameters learned on the other four folds, so no image's own label is ever used to calibrate it.
+
+<!-- RESULTS:CALIBRATION -->
+![Reliability diagram](results/calibration/reliability_diagram.png)
+
+| Malignancy, paper design | ECE ↓ (95% CI) | Brier ↓ | Log loss ↓ | Mean predicted P(malignant) |
+|---|---:|---:|---:|---:|
+| As trained | 0.109 (0.095–0.131) | 0.205 | 0.610 | 0.542 |
+| Temperature scaling (T ≈ 1.74) | 0.091 (0.072–0.112) | 0.197 | 0.576 | 0.539 |
+| **Platt scaling** | **0.028** (0.024–0.049) | **0.188** | **0.555** | **0.448** |
+| *Actual share of malignant images* | | | | *0.448* |
+
+ECE (expected calibration error) is the average gap between predicted and observed frequency; 0 means perfect.
+Bootstrapped ECE is biased slightly upwards, so its CI sits mostly above the point estimate.
+Full tables for all variants: [`results/calibration/summary.md`](results/calibration/summary.md).
+
+**What this shows**
+
+1. **The malignancy output is over-confident *and* biased.** Its probabilities are too extreme (a temperature
+   of 1.74 is needed to soften them), and on average it predicts 54% malignant when the true share is 45%. Temperature
+   scaling can only fix the first problem. Platt scaling (a slope *and* an intercept) fixes both and cuts ECE from
+   0.109 to 0.028. Neither changes the AUC, because both keep the ranking of the images the same.
+2. **The density output is already well calibrated** (top-label ECE 0.034; temperature 0.88 barely changes it).
+   The label smoothing used for the density head, which follows the paper, is probably part of the reason.
+3. **A calibration only holds for the model it was fitted on.** Parameters learned from the cross-validation
+   models and applied to the separately trained official-split model reduce its ECE from 0.206 to 0.090,
+   not to 0.03. A deployed model has to be recalibrated on held-out data of its own.
+4. **The threshold decides the trade-off, and the loss weights don't.** A threshold chosen on the other folds to
+   reach 90% sensitivity does reach 89.8% on unseen patients, and it costs specificity (0.39, i.e. 950 false
+   alarms among 1,547 benign images). The paper says its loss weighting (λ₁/λ₂ ≈ 2.5) "ensures minimizing false
+   negatives". A loss weight does not set that trade-off; the decision threshold does.
+5. **Sanity check against the paper.** For every model here Brier ≥ ECE², as it must be mathematically. The
+   paper's pair (Brier 0.010, ECE 0.365–0.419) would need Brier ≥ 0.133.
+
+### 4b. External validation on INbreast
+
+The four variants are retrained on the official CBIS-DDSM training patients and tested, unchanged, on all 410
+INbreast images: digital mammograms from Portugal, compared with scanned US film in training. Nothing from INbreast is used for
+training, tuning or calibration. Density is the main test because both datasets grade it on the same 4-level
+scale. Malignancy can only be checked against a proxy (BI-RADS 4–6 vs 1–3), since INbreast has no biopsy result
+for most images.
+
+<!-- RESULTS:EXTERNAL -->
+*Pending:* run [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb) on Kaggle (~45 min).
+
 ## Roadmap
 
 | Phase | Status | What |
@@ -135,7 +190,7 @@ leaks too unless it is re-checked at the patient level.
 | 1 | ✅ | Clean, tested codebase (`src/mammo`), v1 archived |
 | 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
 | 3 | ✅ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
-| 4 | ⏳ | Calibration (temperature scaling) and external validation on INbreast |
+| 4 | 🟡 | Calibration ✅ (temperature and Platt scaling, operating points); external validation on INbreast ⏳ |
 | 5 | ⏳ | Do attention maps point at lesions? Scored against radiologist ROI outlines |
 | 6 | ⏳ | Final report |
 
@@ -157,6 +212,8 @@ cell, turn on GPU and Internet, then **Run All**:
 
 - [`notebooks/02_leakage_experiment.ipynb`](notebooks/02_leakage_experiment.ipynb): Phase 2, ~40 min
 - [`notebooks/03_cbis_multitask.ipynb`](notebooks/03_cbis_multitask.ipynb): Phase 3, ~2 h on T4 x2
+- `PYTHONPATH=src python -m mammo.experiments.calibration`: Phase 4a, 1 min on a laptop (uses the Phase 3 predictions)
+- [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb): Phase 4b, ~45 min on T4 x2
 
 Locally: `pip install -r requirements.txt && PYTHONPATH=src pytest -q tests`
 
