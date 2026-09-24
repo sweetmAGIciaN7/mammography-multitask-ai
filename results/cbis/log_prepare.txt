@@ -1,0 +1,33 @@
+CBIS-DDSM csv : /kaggle/input/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset/csv
+CBIS-DDSM jpeg: /kaggle/input/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset/jpeg
+=== CBIS-DDSM ===
+abnormalities (case rows) : 3568  (no JPEG found: 282)
+breast images             : 2802  (malignant 1255, 44.8%)
+patients                  : 1460
+density known             : 2802  {'BI-RADS A (fatty)': 401, 'BI-RADS B (scattered)': 1107, 'BI-RADS C (heterogeneous)': 848, 'BI-RADS D (extremely dense)': 446}
+density conflicts         : 0 images
+stored twice (mass+calc)  : 55 images, merged
+patients in both official train and test: 22 -> official test keeps 368 images
+
+=== Patient-level folds ===
+      images  patients  malignant
+fold                             
+1        545       286      0.461
+2        570       292      0.407
+3        583       296      0.441
+4        559       294      0.449
+5        545       292      0.484
+  preprocessed 250/2802
+  preprocessed 500/2802
+  preprocessed 750/2802
+  preprocessed 1000/2802
+  preprocessed 1250/2802
+  preprocessed 1500/2802
+  preprocessed 1750/2802
+  preprocessed 2000/2802
+  preprocessed 2250/2802
+  preprocessed 2500/2802
+  preprocessed 2750/2802
+  preprocessed 2802/2802
+images ready: (2802, 640, 384) uint8 in 1.3 min
+preview written to /kaggle/working/results/cbis/preprocessing_preview.png

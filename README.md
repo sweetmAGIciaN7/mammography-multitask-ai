@@ -84,7 +84,49 @@ honest, does the paper's design actually help?"**
   realistic) than classifying a radiologist-drawn crop.
 
 <!-- RESULTS:CBIS -->
-*Results pending: the full run is in progress on Kaggle.*
+![CBIS-DDSM ablation](results/cbis/ablation_chart.png)
+
+2,802 mammograms from 1,460 patients. Patient-level 5-fold CV, pooled out-of-fold, with 95% CIs from a bootstrap
+over patients. EfficientNet-B0 at 640×384, 15 epochs, 2× Kaggle T4, about 1.5 h for all 20 models.
+
+| Model | Malignancy AUC (95% CI) | Malignancy acc. | Density acc. | Density QWK (95% CI) |
+|---|---:|---:|---:|---:|
+| **Multi-task + CBAM (paper design)** | **0.782** (0.762–0.802) | 0.700 | 0.668 | 0.769 (0.746–0.791) |
+| Multi-task, no attention | 0.769 (0.748–0.789) | 0.697 | 0.653 | 0.761 (0.735–0.784) |
+| Malignancy only + CBAM | 0.773 (0.752–0.793) | 0.691 | – | – |
+| Density only + CBAM | – | – | 0.681 | 0.780 (0.755–0.802) |
+| *Always predict the most common class* | *0.500* | *0.552* | *0.395* | *0.000* |
+
+QWK is the quadratic-weighted kappa: agreement on the ordered density grades A < B < C < D, where 0 means chance.
+
+**Official CBIS-DDSM test split** (paper design, trained on the official training patients): malignancy AUC
+**0.746**, density accuracy 0.606, QWK 0.711, on 368 images from 212 patients never seen in training. 22 patients
+appear in *both* the official train and test files. We count them as training patients, so the official split
+leaks too unless it is re-checked at the patient level.
+
+**Does the paper's design help?** Each comparison is paired (same test images, bootstrap over patients):
+
+| Question | Difference | 95% CI | Verdict |
+|---|---:|---:|---|
+| Does adding density help malignancy? | AUC +0.009 | −0.004 to +0.024 | no clear effect |
+| Does adding malignancy help density? | QWK −0.010 | −0.026 to +0.005 | no clear effect |
+| Does CBAM attention help malignancy? | AUC +0.013 | +0.002 to +0.026 | small gain (single seed) |
+| Does CBAM attention help density? | QWK +0.008 | −0.005 to +0.023 | no clear effect |
+
+**What this shows**
+
+1. **With an honest split, the paper's architecture reaches AUC 0.78, not 0.96.** That is a solid, realistic
+   number for classifying whole downsampled mammograms, and it falls within the 0.70–0.85 range expected from the
+   Phase 2 audit. The gap to the reported 93.6% accuracy comes from the evaluation protocol, not from the architecture.
+2. **Multi-task learning neither helps nor hurts measurably.** One network doing both tasks matches two separate
+   networks, so its practical value is efficiency (one model instead of two), not accuracy.
+3. **CBAM attention gives a small malignancy gain (+0.013 AUC).** It is statistically detectable across patients,
+   but it comes from a single training seed and is small next to the fold-to-fold spread (±0.025). Whether the
+   attention maps actually point at lesions is tested in Phase 5.
+4. **Density is learnable on this data.** QWK is 0.77, and most errors are between neighbouring grades. On the 50
+   patients of Phase 2, density was at chance.
+5. **Calcifications are the hard case.** AUC is 0.83 on images with masses but 0.72 on images with only
+   calcifications. Calcifications are a few pixels across and largely lost at 640×384.
 
 ## Roadmap
 
@@ -92,7 +134,7 @@ honest, does the paper's design actually help?"**
 |---|---|---|
 | 1 | ✅ | Clean, tested codebase (`src/mammo`), v1 archived |
 | 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
-| 3 | 🏃 | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
+| 3 | ✅ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
 | 4 | ⏳ | Calibration (temperature scaling) and external validation on INbreast |
 | 5 | ⏳ | Do attention maps point at lesions? Scored against radiologist ROI outlines |
 | 6 | ⏳ | Final report |

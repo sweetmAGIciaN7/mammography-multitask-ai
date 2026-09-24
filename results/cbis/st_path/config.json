@@ -1,0 +1,22 @@
+{
+ "backbone": "efficientnet_b0",
+ "attention": true,
+ "pretrained": true,
+ "image_size": 640,
+ "epochs": 15,
+ "batch_size": 16,
+ "lr": 0.0002,
+ "weight_decay": 0.01,
+ "w_pathology": 2.0,
+ "w_density": 0.8,
+ "label_smoothing": 0.05,
+ "seed": 42,
+ "amp": true,
+ "augment": "mammo",
+ "tasks": [
+  "pathology"
+ ],
+ "height": 640,
+ "width": 384,
+ "label": "Malignancy only + CBAM"
+}

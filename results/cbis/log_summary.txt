@@ -1,0 +1,17 @@
+| Model | Malignancy AUC (95% CI) | Malignancy acc. | Density acc. | Density QWK (95% CI) |
+|---|---:|---:|---:|---:|
+| Multi-task + CBAM (paper design) | 0.782 (0.762–0.802) | 0.700 | 0.668 | 0.769 (0.746–0.791) |
+| Multi-task, no attention | 0.769 (0.748–0.789) | 0.697 | 0.653 | 0.761 (0.735–0.784) |
+| Malignancy only + CBAM | 0.773 (0.752–0.793) | 0.691 | – | – |
+| Density only + CBAM | – | – | 0.681 | 0.780 (0.755–0.802) |
+| *Always predict the most common class* | *0.500* | *0.552* | *0.395* | *0.000* |
+
+| Question | Difference (A − B) | 95% CI | P(A not better) |
+|---|---:|---:|---:|
+| Does adding the density task help malignancy? (AUC) | +0.009 | -0.004 to +0.024 | 0.08 |
+| Does adding the malignancy task help density? (QWK) | -0.010 | -0.026 to +0.005 | 0.90 |
+| Does CBAM attention help malignancy? (AUC) | +0.013 | +0.002 to +0.026 | 0.01 |
+| Does CBAM attention help density? (QWK) | +0.008 | -0.005 to +0.023 | 0.13 |
+
+Official CBIS-DDSM test split (Multi-task + CBAM (paper design), 368 images, 212 unseen patients): malignancy AUC 0.746, accuracy 0.622, density acc. 0.606, density QWK 0.711
+

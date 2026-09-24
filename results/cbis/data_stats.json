@@ -1,0 +1,18 @@
+{
+ "abnormalities": 3568,
+ "abnormalities_without_jpeg": 282,
+ "images": 2802,
+ "patients": 1460,
+ "malignant_images": 1255,
+ "density_known": 2802,
+ "density_counts": {
+  "BI-RADS A (fatty)": 401,
+  "BI-RADS B (scattered)": 1107,
+  "BI-RADS C (heterogeneous)": 848,
+  "BI-RADS D (extremely dense)": 446
+ },
+ "density_conflicts": 0,
+ "images_stored_twice_mass_and_calc": 55,
+ "patients_in_official_train_and_test": 22,
+ "official_test_images_after_patient_dedup": 368
+}

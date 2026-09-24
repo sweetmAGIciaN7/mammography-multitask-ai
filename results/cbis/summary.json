@@ -1,0 +1,293 @@
+{
+ "results": {
+  "mt_cbam": {
+   "label": "Multi-task + CBAM (paper design)",
+   "n_images": 2802,
+   "n_patients": 1460,
+   "malignancy": {
+    "auc_pooled": 0.7819797732148329,
+    "auc_ci95": [
+     0.7617373298082795,
+     0.8024696540010008
+    ],
+    "auc_fold_mean": 0.7842491418408708,
+    "auc_fold_std": 0.024539504634857007,
+    "accuracy": 0.6998572448251249,
+    "sensitivity": 0.7521912350597609,
+    "specificity": 0.6574014221073045,
+    "balanced_accuracy": 0.7047963285835327,
+    "brier": 0.20470086964993797,
+    "ece": 0.10896125073579586,
+    "majority_baseline_accuracy": 0.5516377799810626
+   },
+   "density": {
+    "accuracy": 0.6677373304782298,
+    "accuracy_ci95": [
+     0.6473305213080377,
+     0.6885127310900496
+    ],
+    "qwk": 0.7692818291082275,
+    "qwk_ci95": [
+     0.7459932728301693,
+     0.791223143245643
+    ],
+    "macro_f1": 0.6591803742439902,
+    "accuracy_fold_mean": 0.6670279136937597,
+    "accuracy_fold_std": 0.0406667576900089,
+    "majority_baseline_accuracy": 0.39476110995742403,
+    "confusion": [
+     [
+      239,
+      147,
+      5,
+      10
+     ],
+     [
+      112,
+      814,
+      153,
+      28
+     ],
+     [
+      5,
+      186,
+      439,
+      218
+     ],
+     [
+      0,
+      16,
+      51,
+      379
+     ]
+    ]
+   }
+  },
+  "mt_plain": {
+   "label": "Multi-task, no attention",
+   "n_images": 2802,
+   "n_patients": 1460,
+   "malignancy": {
+    "auc_pooled": 0.76856529924259,
+    "auc_ci95": [
+     0.7475909391421037,
+     0.78919647029845
+    ],
+    "auc_fold_mean": 0.7710257667807766,
+    "auc_fold_std": 0.026824351518326822,
+    "accuracy": 0.6970021413276232,
+    "sensitivity": 0.7290836653386454,
+    "specificity": 0.6709760827407886,
+    "balanced_accuracy": 0.7000298740397171,
+    "brier": 0.2103306985415694,
+    "ece": 0.11813977499061387,
+    "majority_baseline_accuracy": 0.5516377799810626
+   },
+   "density": {
+    "accuracy": 0.6527480371163454,
+    "accuracy_ci95": [
+     0.6311120895176865,
+     0.6746648795768838
+    ],
+    "qwk": 0.7609868979734604,
+    "qwk_ci95": [
+     0.7350394409570331,
+     0.7840688792315661
+    ],
+    "macro_f1": 0.6438362860776299,
+    "accuracy_fold_mean": 0.6520615531051717,
+    "accuracy_fold_std": 0.03357014544198227,
+    "majority_baseline_accuracy": 0.39476110995742403,
+    "confusion": [
+     [
+      247,
+      139,
+      3,
+      12
+     ],
+     [
+      133,
+      796,
+      139,
+      39
+     ],
+     [
+      5,
+      199,
+      399,
+      245
+     ],
+     [
+      2,
+      9,
+      48,
+      387
+     ]
+    ]
+   }
+  },
+  "st_path": {
+   "label": "Malignancy only + CBAM",
+   "n_images": 2802,
+   "n_patients": 1460,
+   "malignancy": {
+    "auc_pooled": 0.7726675714723524,
+    "auc_ci95": [
+     0.7524950988825492,
+     0.7925849719744396
+    ],
+    "auc_fold_mean": 0.7758145050733087,
+    "auc_fold_std": 0.029389710545644734,
+    "accuracy": 0.6912919343326196,
+    "sensitivity": 0.7083665338645418,
+    "specificity": 0.6774402068519716,
+    "balanced_accuracy": 0.6929033703582568,
+    "brier": 0.2055186033887506,
+    "ece": 0.10754230128972163,
+    "majority_baseline_accuracy": 0.5516377799810626
+   }
+  },
+  "st_dens": {
+   "label": "Density only + CBAM",
+   "n_images": 2802,
+   "n_patients": 1460,
+   "density": {
+    "accuracy": 0.6809421841541756,
+    "accuracy_ci95": [
+     0.6600011471006658,
+     0.7007447213603337
+    ],
+    "qwk": 0.7795659854395878,
+    "qwk_ci95": [
+     0.7550300998820466,
+     0.8015372272802443
+    ],
+    "macro_f1": 0.6732472514620919,
+    "accuracy_fold_mean": 0.6807167272865142,
+    "accuracy_fold_std": 0.02268928964707461,
+    "majority_baseline_accuracy": 0.39476110995742403,
+    "confusion": [
+     [
+      255,
+      135,
+      5,
+      6
+     ],
+     [
+      135,
+      845,
+      114,
+      13
+     ],
+     [
+      4,
+      223,
+      457,
+      164
+     ],
+     [
+      1,
+      25,
+      69,
+      351
+     ]
+    ]
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "question": "Does adding the density task help malignancy?",
+   "a": "mt_cbam",
+   "b": "st_path",
+   "metric": "AUC",
+   "diff": 0.009312201742480486,
+   "ci95": [
+    -0.004230243612409523,
+    0.02353363464556768
+   ],
+   "p_not_better": 0.084,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does adding the malignancy task help density?",
+   "a": "mt_cbam",
+   "b": "st_dens",
+   "metric": "QWK",
+   "diff": -0.010284156331360261,
+   "ci95": [
+    -0.025967863988579563,
+    0.005498491462139276
+   ],
+   "p_not_better": 0.903,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does CBAM attention help malignancy?",
+   "a": "mt_cbam",
+   "b": "mt_plain",
+   "metric": "AUC",
+   "diff": 0.013414473972242935,
+   "ci95": [
+    0.001530280378459087,
+    0.02571572201213188
+   ],
+   "p_not_better": 0.012,
+   "n_boot": 2000
+  },
+  {
+   "question": "Does CBAM attention help density?",
+   "a": "mt_cbam",
+   "b": "mt_plain",
+   "metric": "QWK",
+   "diff": 0.008294931134767092,
+   "ci95": [
+    -0.004886083332154461,
+    0.022592523680144756
+   ],
+   "p_not_better": 0.1285,
+   "n_boot": 2000
+  }
+ ],
+ "official_split": {
+  "mt_cbam": {
+   "config": "mt_cbam",
+   "n_train": 2434,
+   "n_test": 368,
+   "test_patients": 212,
+   "patients_in_both": 0,
+   "path_auc": 0.7461911252461002,
+   "path_accuracy": 0.6222826086956522,
+   "path_sensitivity": 0.7612903225806451,
+   "path_specificity": 0.5211267605633803,
+   "path_brier": 0.24564374577754175,
+   "path_ece": 0.20637980475515613,
+   "path_n": 368,
+   "path_balanced_accuracy": 0.6412085415720127,
+   "path_majority_accuracy": 0.5788043478260869,
+   "dens_accuracy": 0.6059782608695652,
+   "dens_macro_f1": 0.5733806999034636,
+   "dens_qwk": 0.7106060606060607,
+   "dens_n": 368,
+   "dens_majority_accuracy": 0.453804347826087
+  }
+ },
+ "data": {
+  "abnormalities": 3568,
+  "abnormalities_without_jpeg": 282,
+  "images": 2802,
+  "patients": 1460,
+  "malignant_images": 1255,
+  "density_known": 2802,
+  "density_counts": {
+   "BI-RADS A (fatty)": 401,
+   "BI-RADS B (scattered)": 1107,
+   "BI-RADS C (heterogeneous)": 848,
+   "BI-RADS D (extremely dense)": 446
+  },
+  "density_conflicts": 0,
+  "images_stored_twice_mass_and_calc": 55,
+  "patients_in_official_train_and_test": 22,
+  "official_test_images_after_patient_dedup": 368
+ }
+}
