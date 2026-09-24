@@ -234,7 +234,7 @@ Paired comparisons on INbreast (bootstrap over patients): multi-task vs density-
 | 2 | ✅ | **Leakage experiment**: paper protocol vs. image-grouped vs. patient-grouped CV |
 | 3 | ✅ | Leakage-free multi-task model on CBIS-DDSM (biopsy-confirmed labels, patient-level split); single- vs. multi-task and attention ablations |
 | 4 | ✅ | Calibration (temperature and Platt scaling, operating points) and external validation on INbreast |
-| 5 | ⏳ | Do attention maps point at lesions? Scored against radiologist ROI outlines |
+| 5 | 🔄 | Do attention maps point at lesions? CBAM attention and Grad-CAM scored against CBIS-DDSM ROI masks, against lesion-blind baselines (code done, results pending) |
 | 6 | ⏳ | Final report |
 
 ## Repository layout
@@ -257,6 +257,7 @@ cell, turn on GPU and Internet, then **Run All**:
 - [`notebooks/03_cbis_multitask.ipynb`](notebooks/03_cbis_multitask.ipynb): Phase 3, ~2 h on T4 x2
 - `PYTHONPATH=src python -m mammo.experiments.calibration`: Phase 4a, 1 min on a laptop (uses the Phase 3 predictions)
 - [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb): Phase 4b, ~45 min on T4 x2
+- [`notebooks/05_attention.ipynb`](notebooks/05_attention.ipynb): Phase 5, ~30 min on one T4 (reuses the Phase 4 checkpoints)
 
 Locally: `pip install -r requirements.txt && PYTHONPATH=src pytest -q tests`
 

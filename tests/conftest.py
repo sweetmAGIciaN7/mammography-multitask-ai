@@ -43,14 +43,24 @@ def fake_kaggle(tmp_path):
     return make_fake_kaggle(tmp_path)
 
 
-def _fake_mammogram(breast_on_right: bool, h: int = 500, w: int = 300, seed: int = 0) -> np.ndarray:
-    """Black film, a bright half-disc 'breast' against one edge, a white scanner strip on top."""
+def fake_lesion(breast_on_right: bool, h: int = 500, w: int = 300) -> np.ndarray:
+    """Boolean disc inside the fake breast (below its centre, a third of the way in from the chest wall)."""
+    yy, xx = np.mgrid[0:h, 0:w]
+    cx = w - 1 - 0.3 * w if breast_on_right else 0.3 * w
+    return (yy - 0.6 * h) ** 2 + (xx - cx) ** 2 <= (0.028 * h) ** 2
+
+
+def _fake_mammogram(breast_on_right: bool, h: int = 500, w: int = 300, seed: int = 0, lesion: bool = False) -> np.ndarray:
+    """Black film, a bright half-disc 'breast' against one edge, a white scanner strip on top,
+    optionally a very bright disc where ``fake_lesion`` puts the ROI mask."""
     rng = np.random.default_rng(seed)
     yy, xx = np.mgrid[0:h, 0:w]
     cx = w - 1 if breast_on_right else 0
     r = ((yy - h / 2) / (0.42 * h)) ** 2 + ((xx - cx) / (0.8 * w)) ** 2
     img = np.where(r < 1, 120 + 100 * (1 - r), 0) + rng.normal(0, 4, (h, w))
     img[:6, :] = 255  # scanner border strip, disconnected from the breast
+    if lesion:
+        img[fake_lesion(breast_on_right, h, w)] = 255
     return np.clip(img, 0, 255).astype(np.uint8)
 
 
@@ -69,16 +79,27 @@ def make_fake_cbis(root: Path) -> Path:
         series_in_csv = series_in_csv or series
         folder = jpeg_dir_name or series
         (jpeg_dir / folder).mkdir(exist_ok=True)
-        Image.fromarray(_fake_mammogram(side == "RIGHT", seed=len(dicom_rows))).save(jpeg_dir / folder / "1-1.jpg")
+        right = side == "RIGHT"
+        if not (jpeg_dir / folder / "1-1.jpg").exists():
+            Image.fromarray(_fake_mammogram(right, seed=len(dicom_rows), lesion=True)).save(
+                jpeg_dir / folder / "1-1.jpg", quality=95)
         dicom_rows.append({"file_path": f"CBIS-DDSM/dicom/{folder}/1-1.dcm", "image_path": f"CBIS-DDSM/jpeg/{folder}/1-1.jpg",
                            "PatientID": case_key, "SeriesDescription": "full mammogram images",
                            "SeriesInstanceUID": folder})
-        # a cropped-lesion image of the same case, which must be ignored
+        # the lesion crop and the ROI mask share one series folder (as in the Kaggle release); the crop must never be
+        # used as a whole image, and for some cases the two labels are swapped, so masks are found by content
         crop = f"1.3.6.1.4.1.9590.100.1.2.{next(uid)}"
         (jpeg_dir / crop).mkdir()
-        Image.fromarray(np.full((50, 50), 200, np.uint8)).save(jpeg_dir / crop / "1-1.jpg")
-        dicom_rows.append({"file_path": "x", "image_path": f"CBIS-DDSM/jpeg/{crop}/1-1.jpg",
-                           "PatientID": case_key + "_1", "SeriesDescription": "cropped images",
+        swap = case_key.endswith("P_00011_LEFT_CC") or case_key.endswith("P_00002_RIGHT_MLO")
+        crop_name, mask_name = ("1-2.jpg", "1-1.jpg") if swap else ("1-1.jpg", "1-2.jpg")
+        Image.fromarray(np.full((50, 50), 200, np.uint8)).save(jpeg_dir / crop / crop_name)
+        if not case_key.endswith("P_00012_RIGHT_MLO"):          # one abnormality without a mask file
+            Image.fromarray(fake_lesion(right).astype(np.uint8) * 255).save(jpeg_dir / crop / mask_name)
+            dicom_rows.append({"file_path": "x", "image_path": f"CBIS-DDSM/jpeg/{crop}/{mask_name}",
+                               "PatientID": case_key + "_1", "SeriesDescription": "cropped images" if swap else "ROI mask images",
+                               "SeriesInstanceUID": crop})
+        dicom_rows.append({"file_path": "x", "image_path": f"CBIS-DDSM/jpeg/{crop}/{crop_name}",
+                           "PatientID": case_key + "_1", "SeriesDescription": "ROI mask images" if swap else "cropped images",
                            "SeriesInstanceUID": crop})
         cases[f"{kind}_{split}"].append({
             "patient_id": patient, "density": density, "left or right breast": side, "image view": view,

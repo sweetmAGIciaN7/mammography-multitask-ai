@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
@@ -70,13 +71,73 @@ def fit_pad(a: np.ndarray, height: int, width: int) -> np.ndarray:
 
 
 def load_mammogram(path: str | Path, height: int = 640, width: int = 384) -> np.ndarray:
+    return load_mammogram_with_transform(path, height, width)[0]
+
+
+@dataclass(frozen=True)
+class Transform:
+    """The geometry ``load_mammogram`` applied to one image, so annotations can follow it (Phase 5).
+
+    ``orig_*``: size of the file on disk. ``dec_*``: size actually decoded (JPEG draft mode shrinks by 2/4/8).
+    ``top/bottom/left/right``: breast crop, in decoded pixels. ``flip``: mirrored left-right after cropping.
+    ``nh/nw``: size of the resized crop; the rest of the ``height x width`` output is zero padding."""
+    orig_h: int
+    orig_w: int
+    dec_h: int
+    dec_w: int
+    top: int
+    bottom: int
+    left: int
+    right: int
+    flip: bool
+    nh: int
+    nw: int
+    height: int
+    width: int
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def load_mammogram_with_transform(path: str | Path, height: int = 640, width: int = 384) -> tuple[np.ndarray, Transform]:
+    """Same pixels as ``load_mammogram`` (it calls this), plus the geometric ``Transform`` that produced them."""
     with Image.open(path) as im:
+        orig_w, orig_h = im.size
         if im.format == "JPEG":
             im.draft("L", (width * 2, height * 2))  # decode at >= 2x the target size, much faster
         a = np.asarray(im.convert("L"))
     t, b, l, r = breast_bbox(a)
-    a = orient_left(a[t:b, l:r])
-    return fit_pad(np.ascontiguousarray(a), height, width)
+    c = a[t:b, l:r]
+    half = c.shape[1] // 2
+    flip = bool(c[:, half:].mean() > c[:, :half].mean())  # identical rule to orient_left
+    c = c[:, ::-1] if flip else c
+    h, w = c.shape
+    scale = min(height / h, width / w)
+    nh, nw = max(1, round(h * scale)), max(1, round(w * scale))
+    tf = Transform(orig_h, orig_w, a.shape[0], a.shape[1], t, b, l, r, flip, nh, nw, height, width)
+    return fit_pad(np.ascontiguousarray(c), height, width), tf
+
+
+def _resize_float(a: np.ndarray, h: int, w: int) -> np.ndarray:
+    if a.shape == (h, w):
+        return a.astype(np.float32, copy=False)
+    return np.asarray(Image.fromarray(a.astype(np.float32)).resize((w, h), Image.BILINEAR))
+
+
+def apply_transform(a: np.ndarray, tf: Transform) -> np.ndarray:
+    """Send an array that is pixel-aligned with the original file (e.g. a lesion mask) through the same
+    decode-size / crop / flip / resize / pad steps. Returns float32 ``height x width``; a 0/1 mask comes back as
+    the fraction of each output pixel covered by the mask."""
+    if a.shape not in ((tf.orig_h, tf.orig_w), (tf.dec_h, tf.dec_w)):
+        raise ValueError(f"array {a.shape} matches neither the original {(tf.orig_h, tf.orig_w)} "
+                         f"nor the decoded {(tf.dec_h, tf.dec_w)} image size")
+    a = _resize_float(np.asarray(a, np.float32), tf.dec_h, tf.dec_w)
+    c = a[tf.top:tf.bottom, tf.left:tf.right]
+    if tf.flip:
+        c = c[:, ::-1]
+    out = np.zeros((tf.height, tf.width), np.float32)
+    out[:tf.nh, :tf.nw] = _resize_float(np.ascontiguousarray(c), tf.nh, tf.nw)
+    return out
 
 
 def _key(paths, height, width) -> str:
