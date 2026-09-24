@@ -1,0 +1,277 @@
+{
+ "paper": {
+  "auc": 0.962,
+  "accuracy": 0.936
+ },
+ "leakage": {
+  "random": {
+   "auc_fold_mean": 1.0,
+   "auc_fold_sd": 0.0,
+   "auc_pooled": 1.0,
+   "auc_pooled_ci95": [
+    0.9999999999999999,
+    1.0
+   ],
+   "density_accuracy": 0.9998689384,
+   "test_patient_in_train": 1.0
+  },
+  "image": {
+   "auc_fold_mean": 0.8667425086,
+   "auc_fold_sd": 0.0661605872,
+   "auc_pooled": 0.8671986393670666,
+   "auc_pooled_ci95": [
+    0.793581673759003,
+    0.9305018166723673
+   ],
+   "density_accuracy": 0.6890993266,
+   "test_patient_in_train": 0.9718614719
+  },
+  "patient": {
+   "auc_fold_mean": 0.7241377874,
+   "auc_fold_sd": 0.0934984803,
+   "auc_pooled": 0.7548313026305984,
+   "auc_pooled_ci95": [
+    0.6673606951085781,
+    0.8349835599768151
+   ],
+   "density_accuracy": 0.4027229214,
+   "test_patient_in_train": 0.0
+  }
+ },
+ "cbis_cv_mt_cbam": {
+  "auc": 0.7819797732148329,
+  "auc_ci95": [
+   0.7617373298082795,
+   0.8024696540010008
+  ],
+  "qwk": 0.7692818291082275,
+  "qwk_ci95": [
+   0.7459932728301693,
+   0.791223143245643
+  ],
+  "n_images": 2802,
+  "n_patients": 1460
+ },
+ "cbis_official": {
+  "auc": 0.7461911252461002,
+  "auc_ci95": [
+   0.681064570641061,
+   0.8046719296153675
+  ],
+  "qwk": 0.7106060606060607,
+  "qwk_ci95": [
+   0.6305450572676438,
+   0.7729990230718657
+  ],
+  "n_images": 368,
+  "n_patients": 212,
+  "sensitivity": 0.7612903225806451,
+  "specificity": 0.5211267605633803,
+  "density_accuracy": 0.6059782608695652
+ },
+ "inbreast_mt_cbam": {
+  "density_qwk": 0.6595533468159621,
+  "density_qwk_ci95": [
+   0.550253215223043,
+   0.7426980273232261
+  ],
+  "within_one_grade": 0.9339853300733496,
+  "proxy_auc": 0.8216290322580646,
+  "proxy_auc_ci95": [
+   0.7607082560417784,
+   0.877445120798043
+  ]
+ },
+ "calibration_official_transfer": {
+  "platt": {
+   "a": 0.6247523237944188,
+   "b": -0.48414053630193177
+  },
+  "ece_uncalibrated": 0.20637980557709315,
+  "ece_platt": 0.08975378440818821
+ },
+ "localisation": {
+  "cbam:mt_cbam": {
+   "pg_px_tol": {
+    "mean": 0.23728813559322035,
+    "ci95": [
+     0.18604651162790697,
+     0.2853109300906146
+    ]
+   },
+   "energy_px": {
+    "mean": 0.019475718257354318,
+    "ci95": [
+     0.01597094337591759,
+     0.023508653044797587
+    ]
+   },
+   "auc_px": {
+    "mean": 0.6938690905519677,
+    "ci95": [
+     0.6630128756623178,
+     0.7227300301446841
+    ]
+   }
+  },
+  "gradcam_mal:mt_cbam": {
+   "pg_px_tol": {
+    "mean": 0.4406779661016949,
+    "ci95": [
+     0.37869209519762004,
+     0.5040436745337804
+    ]
+   },
+   "energy_px": {
+    "mean": 0.10275599015026596,
+    "ci95": [
+     0.08528481710806492,
+     0.12140892234776463
+    ]
+   },
+   "auc_px": {
+    "mean": 0.7217733076323273,
+    "ci95": [
+     0.6826221252133197,
+     0.7591265604505845
+    ]
+   }
+  },
+  "base:brightness": {
+   "pg_px_tol": {
+    "mean": 0.18220338983050846,
+    "ci95": [
+     0.14285714285714285,
+     0.22361382524707996
+    ]
+   },
+   "energy_px": {
+    "mean": 0.021793084373672198,
+    "ci95": [
+     0.017675738509151433,
+     0.026420846574663585
+    ]
+   },
+   "auc_px": {
+    "mean": 0.6661011260289841,
+    "ci95": [
+     0.635901868858296,
+     0.6959246178506383
+    ]
+   }
+  },
+  "base:uniform": {
+   "pg_px_tol": {
+    "mean": 0.07613039918760747,
+    "ci95": [
+     0.06992924486977328,
+     0.08322794683798458
+    ]
+   },
+   "energy_px": {
+    "mean": 0.017748019065797163,
+    "ci95": [
+     0.014495912028402003,
+     0.021584843121323614
+    ]
+   },
+   "auc_px": {
+    "mean": 0.5,
+    "ci95": [
+     0.5,
+     0.5
+    ]
+   }
+  },
+  "ref:oracle": {
+   "pg_px_tol": {
+    "mean": 1.0,
+    "ci95": [
+     1.0,
+     1.0
+    ]
+   },
+   "energy_px": {
+    "mean": 0.4312955148643953,
+    "ci95": [
+     0.4062108393492333,
+     0.4558978046778304
+    ]
+   },
+   "auc_px": {
+    "mean": 0.9984917779506421,
+    "ci95": [
+     0.9983213770342055,
+     0.9986403065139223
+    ]
+   }
+  }
+ },
+ "sources": {
+  "leakage": "results/leakage/summary.json",
+  "cbis_cv": "results/cbis/summary.json",
+  "cbis_official": "results/external/mt_cbam/cbis_official_{metrics.json,predictions.csv}",
+  "inbreast": "results/external/summary.json",
+  "localisation": "results/attention/summary.json",
+  "calibration": "results/calibration/summary.json"
+ },
+ "overview_rows": [
+  {
+   "label": "Paper, as reported\n(INbreast, split after augmentation)",
+   "auc": 0.962,
+   "ci": null,
+   "group": "leaky",
+   "note": "reported"
+  },
+  {
+   "label": "Our replication of the paper's protocol\n(same data, split after augmentation)",
+   "auc": 1.0,
+   "ci": [
+    0.9999999999999999,
+    1.0
+   ],
+   "group": "leaky",
+   "note": "test copies' originals all in training"
+  },
+  {
+   "label": "Same data, grouped by original image",
+   "auc": 0.8671986393670666,
+   "ci": [
+    0.793581673759003,
+    0.9305018166723673
+   ],
+   "group": "partial",
+   "note": "97% of test images: same patient in training"
+  },
+  {
+   "label": "Same data, grouped by patient\n(106 images, 50 patients)",
+   "auc": 0.7548313026305984,
+   "ci": [
+    0.6673606951085781,
+    0.8349835599768151
+   ],
+   "group": "honest",
+   "note": "no patient overlap"
+  },
+  {
+   "label": "CBIS-DDSM, patient-level 5-fold CV\n(2,802 images, 1,460 patients)",
+   "auc": 0.7819797732148329,
+   "ci": [
+    0.7617373298082795,
+    0.8024696540010008
+   ],
+   "group": "honest",
+   "note": "biopsy-confirmed labels"
+  },
+  {
+   "label": "CBIS-DDSM, official test split\n(368 images, 212 unseen patients)",
+   "auc": 0.7461911252461002,
+   "ci": [
+    0.681064570641061,
+    0.8046719296153675
+   ],
+   "group": "honest",
+   "note": "trained once on the official training split"
+  }
+ ]
+}

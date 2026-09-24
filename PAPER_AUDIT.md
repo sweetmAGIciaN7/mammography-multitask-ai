@@ -38,8 +38,8 @@ The paper's split gave malignancy AUC **1.000**. Grouping by patient gave **0.72
 
 ## 2. The reported accuracies imply an augmented test set
 
-A 20% hold-out of 410 images has ~82 images. On 81–83 test images, the achievable accuracies near the reported
-values are 0.926, 0.928, 0.938 and 0.939. The reported **0.936** (Table 2) and the fold accuracies **0.933,
+A 20% hold-out of 410 images has ~82 images. On 81–83 test images, the achievable accuracies between 0.92 and
+0.945 are 0.926–0.928 and 0.938–0.940; nothing in between is possible. The reported **0.936** (Table 2) and the fold accuracies **0.933,
 0.931, 0.934** (Table 4) cannot be produced on 81–83 original images. They are only possible on the much larger
 augmented test sets. This supports §1 for both the hold-out and the 5-fold cross-validation.
 
@@ -58,14 +58,15 @@ INbreast has 115 patients and 410 images: typically CC and MLO views of both bre
 | 4.4 | Sec. IV-B vs Fig. 2 / Sec. VI-A | Two different architectures are described. The first is CBAM (channel + 7×7 spatial attention) with Dense 512→256→128 heads. The second is spatial-only attention (Conv 64→32→1) with Dense 256→128→64 heads. Fig. 2 shows EfficientNet-B3 at 224×224 giving 7×7×**960** features, but B3 outputs 1,536 channels (960 is MobileNetV3-Large), and Sec. V-A states B3 was run at 300×300. |
 | 4.5 | Secs. III-A, III-B, V-A | Three different augmentation recipes are given (±15° rotation/±10% scale/±15% brightness; CLAHE + 11 rotations + H/V flips; H-flip + ±10% brightness + 0.9–1.1 contrast). |
 | 4.6 | Fig. 4 | Two of the four "correct attention" examples are misclassified: Case B is benign with P(malignant)=0.82, Case C is malignant with P=0.35. |
-| 4.7 | Sec. VI-C | Attention statistics (Gini, entropy, p-values) are reported without a method, a sample size, or radiologist ground truth. 🧪 Tested in Phase 5 against CBIS-DDSM ROI masks: the CBAM attention localises lesions barely better than a brightest-tissue baseline, and none of the reported statistics is reproduced ([README](README.md#phase-5-do-the-attention-maps-point-at-the-lesion)). |
+| 4.7 | Sec. VI-C | Attention statistics (Gini, entropy, p-values) are reported without a method, a sample size, or radiologist ground truth. 🧪 Tested in Phase 5 against CBIS-DDSM ROI masks: the CBAM attention localises lesions barely better than a brightest-tissue baseline, and none of the reported statistics is reproduced ([Phase 5](docs/RESULTS.md#phase-5-do-the-attention-maps-point-at-the-lesion)). |
 | 4.8 | Sec. V-D | CUDA 12.5 is stated for an RTX 5090. Blackwell GPUs require CUDA 12.8 or newer. |
 | 4.9 | Sec. IV-A | *"λ₁/λ₂ ≈ 2.5 ensures the model prioritizes minimizing false negatives"*: a loss weight between two tasks does not set the sensitivity/specificity trade-off. That is the decision threshold's job. |
 
 ## 5. What this does *not* claim
 
 - It does not claim the attention architecture is ineffective. That needs a leakage-free comparison, which is
-  Phase 3 of this project.
+  Phase 3 of this project: with a patient-level split the design reaches AUC 0.78 on CBIS-DDSM, and CBAM adds a
+  small +0.013 ([Phase 3](docs/RESULTS.md#phase-3-a-leakage-free-multi-task-model-cbis-ddsm)).
 - It does not claim any intent. Augment-then-split is a common mistake in medical imaging; see e.g.
   Roberts et al., *Nature Machine Intelligence* 3, 199–217 (2021), and Kapoor & Narayanan, *Patterns* 4(9), 2023.
 - No code or split files were released with the paper, so exact reproduction is impossible. §1–2 are the most
