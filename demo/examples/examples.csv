@@ -1,0 +1,7 @@
+file,image_id,pathology,lesion_type,density
+example_1.png,P_01204_RIGHT_MLO,malignant,mass,A
+example_2.png,P_01640_LEFT_MLO,malignant,mass,D
+example_3.png,P_00099_LEFT_MLO,benign,mass,B
+example_4.png,P_00158_RIGHT_MLO,benign,mass,B
+example_5.png,P_00131_LEFT_CC,benign,mass,A
+example_6.png,P_00962_RIGHT_MLO,malignant,mass,B

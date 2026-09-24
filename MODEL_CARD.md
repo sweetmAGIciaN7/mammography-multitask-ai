@@ -16,7 +16,7 @@ result file. Headline numbers are collected in [`results/overview/summary.json`]
 | Output | P(malignant) for the image's finding(s); probabilities of density A/B/C/D; optional Grad-CAM and CBAM maps |
 | Training | Official CBIS-DDSM training split (2,434 images); 22 patients listed in both official splits kept in training only. 15 epochs, AdamW (lr 2e-4, weight decay 0.01, one-cycle schedule), batch 16, mixed precision, loss = 2.0·BCE(malignancy) + 0.8·CE(density, label smoothing 0.05), mammography-safe augmentation (vertical flip, ±10° rotation, zoom, shift, brightness/contrast). Seed 42, one run |
 | Calibration | Optional Platt scaling of the malignancy logit, `sigmoid(0.625·z − 0.484)`, fitted on Phase 3 cross-validation predictions (not on the test split) |
-| Weights | Produced by [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb). A slim copy with calibration and provenance is exported by [`notebooks/06_demo_export.ipynb`](notebooks/06_demo_export.ipynb) and served by the demo |
+| Weights | Produced by [`notebooks/04_external_inbreast.ipynb`](notebooks/04_external_inbreast.ipynb). A slim copy with calibration and provenance, [`demo/model.pt`](demo/model.pt) (20.5 MB), is exported by [`notebooks/06_demo_export.ipynb`](notebooks/06_demo_export.ipynb) and served by the [online demo](https://mammography-multitask-ai.streamlit.app). Load it with `mammo.demo.load_demo_model` |
 | License | Code MIT. The weights were trained on CBIS-DDSM (CC BY 3.0); cite it when using them |
 
 ## Intended use
@@ -81,6 +81,9 @@ are a few pixels across at 640×384). CC and MLO views: both 0.78.
 - **Task definition.** "Malignant" means the image's CBIS-DDSM finding was biopsy-proven malignant. The model has
   not learned to find cancer in an unselected screening exam.
 - **Label noise.** CBIS-DDSM density and outlines come from one reading. Calcification ROIs are loose.
+- **Sensitive to resampling.** Re-saving a test image as a downscaled JPEG (longest side 2,400 px) before
+  preprocessing changed the raw malignancy score by up to 0.17 (0.83 → 0.65 on one of six images). The model has
+  only seen images decoded one way, so resolution and compression differences alone can move its output.
 - **Preprocessing assumptions.** Some film-edge strips and scanner labels survive the crop. Images that are not
   single-view mammograms produce meaningless output, and the demo does not detect this.
 - **Fairness.** CBIS-DDSM has no age, ethnicity or scanner metadata, so subgroup performance on these axes could not

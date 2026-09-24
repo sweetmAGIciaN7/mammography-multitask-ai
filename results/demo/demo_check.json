@@ -1,0 +1,17 @@
+{
+ "max_abs_diff_vs_phase5": 1.2144088744614479e-06,
+ "max_abs_diff_example_vs_original": 0.0,
+ "n_examples": 6,
+ "files": [
+  "examples/example_1.png",
+  "examples/example_2.png",
+  "examples/example_3.png",
+  "examples/example_4.png",
+  "examples/example_5.png",
+  "examples/example_6.png",
+  "examples/examples.csv",
+  "model.pt"
+ ],
+ "model_mb": 20.542775,
+ "examples_mb": 3.95112
+}

@@ -5,7 +5,7 @@ and measured what the same design really achieves.**
 
 ![python](https://img.shields.io/badge/python-3.11-blue) ![pytorch](https://img.shields.io/badge/PyTorch-2.x-red) ![tests](https://img.shields.io/badge/tests-pytest-brightgreen) ![license](https://img.shields.io/badge/license-MIT-green)
 
-[**Technical report (PDF)**](report/report.pdf) · [**Live demo**](DEMO_URL) · [**Model card**](MODEL_CARD.md) ·
+[**Technical report (PDF)**](report/report.pdf) · [**Live demo**](https://mammography-multitask-ai.streamlit.app) · [**Model card**](MODEL_CARD.md) ·
 [Detailed results](docs/RESULTS.md) · [Paper audit](PAPER_AUDIT.md)
 
 > ⚠️ Research and education only. Not a medical device. Must not be used for diagnosis or screening.
@@ -91,10 +91,12 @@ calibration error from 0.109 to 0.028), operating points (a threshold set for 90
 
 ## Demo
 
-[Try the model in a browser](DEMO_URL): upload a mammogram and get the malignancy score (calibrated on
+[Try the model in a browser](https://mammography-multitask-ai.streamlit.app): upload a mammogram and get the malignancy score (calibrated on
 CBIS-DDSM), the density grade, Grad-CAM, and the attention gate on its true 0–1 scale. The examples are six
-randomly drawn test images, misclassified ones included. Code: [`demo/app.py`](demo/app.py),
-[`src/mammo/demo.py`](src/mammo/demo.py).
+randomly drawn official-test images (seed 0, three malignant and three benign), misclassified ones included; the app
+reproduces their Phase 5 predictions exactly. It runs on the free Streamlit Community Cloud and falls asleep when
+unused, so the first visit can take about a minute. Code: [`demo/streamlit_app.py`](demo/streamlit_app.py),
+[`src/mammo/demo.py`](src/mammo/demo.py). Check of the demo against Phase 5: [`results/demo/`](results/demo/).
 
 ## Repository layout
 
@@ -137,12 +139,12 @@ Locally: `pip install -r requirements.txt && PYTHONPATH=src pytest -q tests`
 - **Huang & Lin (2020)**, *Dataset of breast mammography images with masses*, Data in Brief 31:105928 (CC BY-NC-SA
   4.0): the pre-augmented INbreast mass images used for the leakage experiment.
 
-No images are redistributed in this repository. The online demo shows six CBIS-DDSM test images as examples, with
-attribution.
+Apart from six CBIS-DDSM test images used as demo examples ([`demo/examples/`](demo/examples/), CC BY 3.0, with
+attribution), no images are redistributed in this repository.
 
 ## About this project
 
-AUTHOR_LINE This is an independent project, not affiliated with the paper's authors. I directed the study, ran every
+**Amangeldiuly Arslan.** This is an independent project, not affiliated with the paper's authors. I directed the study, ran every
 experiment and reviewed the results. The code and much of the analysis were produced with an AI assistant
-(Claude, Anthropic), which is why many commits are authored by "Claude". Critique of the reference paper is meant as a good-faith replication, and I am happy to
-correct anything I got wrong. Please open an issue.
+(Claude, Anthropic), which is why many commits are authored by "Claude". Critique of the reference paper is meant
+as a good-faith replication, and I am happy to correct anything I got wrong. Please open an issue.
